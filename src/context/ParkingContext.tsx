@@ -1154,7 +1154,8 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
     breakdown?: ChileanCashBreakdown,
     supervisorPin?: string,
     handoverInfo?: { transferredVehiclesCount: number; forcedExitVehiclesCount: number },
-    supervisorName?: string
+    supervisorName?: string,
+    handoverFundAmount?: number
   ): Shift => {
     // Calculate expected totals from paid tickets in current shift
     const paidTickets = tickets.filter((t) => t.status === 'pagado');
@@ -1196,6 +1197,7 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
       declaredCard,
       declaredTransfer,
       declaredCashBreakdown: breakdown,
+      handoverFundAmount,
       expectedCash,
       expectedCard,
       expectedTransfer,
@@ -1238,7 +1240,7 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     addAuditLog(
       'CIERRE_CAJA_CIEGO',
-      `Cierre de caja ciego procesado por ${user.name}. Declarado: $${totalDeclared.toLocaleString('es-CL')} | Esperado: $${totalExpected.toLocaleString('es-CL')} (Diferencia: $${discrepancyTotal.toLocaleString('es-CL')} CLP)${isDiscrepancyFlagged ? ' [DESCUADRADO > $2.000 CLP]' : ''}${justification ? ` - Justificación: ${justification}` : ''}`,
+      `Cierre de caja ciego procesado por ${user.name}${isOffline ? ' (Modo Offline)' : ''}. Declarado: $${totalDeclared.toLocaleString('es-CL')} | Esperado: $${totalExpected.toLocaleString('es-CL')} (Diferencia: $${discrepancyTotal.toLocaleString('es-CL')} CLP)${isDiscrepancyFlagged ? ' [DESCUADRADO > $2.000 CLP]' : ''}${justification ? ` - Justificación: ${justification}` : ''}`,
       isDiscrepancyFlagged ? 'critical' : discrepancyTotal !== 0 ? 'warning' : 'info',
       supervisorPin ? `Supervisor (${supervisorName || 'PIN Verificado'})` : undefined
     );

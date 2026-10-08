@@ -177,6 +177,7 @@ export interface Shift {
   declaredCard?: number;
   declaredTransfer?: number;
   declaredCashBreakdown?: ChileanCashBreakdown;
+  handoverFundAmount?: number;
   cashMovements?: CashMovement[];
   expectedCash?: number;
   expectedCard?: number;

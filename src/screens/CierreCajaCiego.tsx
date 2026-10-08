@@ -153,7 +153,10 @@ export const CierreCajaCiego: React.FC = () => {
       transferVal,
       justification,
       cashInputMode === 'denominaciones' ? breakdown : undefined,
-      supervisorPinArg
+      supervisorPinArg,
+      undefined,
+      undefined,
+      parseInt(handoverFundAmount) || 0
     );
 
     setClosedShiftResult(result);
@@ -172,15 +175,6 @@ export const CierreCajaCiego: React.FC = () => {
     if (hasActiveVehicles && !hasCompletedVehicleReview) {
       setErrorMessage('Debe realizar la revisión 1 a 1 de vehículos en el recinto antes del cierre.');
       setIsRevisionVehiculosOpen(true);
-      return;
-    }
-
-    const cashVal = parseInt(declaredCash) || 0;
-    const expected = currentShift.expectedCash || 0;
-    const diffCash = Math.abs(cashVal - expected);
-
-    if (diffCash > cashToleranceClp) {
-      setShowPinRequirementModal(true);
       return;
     }
 
@@ -680,17 +674,23 @@ export const CierreCajaCiego: React.FC = () => {
                     <CheckCircle2 className="w-5 h-5 text-slate-800 shrink-0" />
                     <div>
                       <span className="font-bold text-xs block text-slate-900">
-                        {isFlagged
-                          ? 'REPORTE 1: TURNO DESCUADRADO (SUPERÓ TOLERANCIA)'
-                          : isPerfect
-                          ? 'Cuadratura Perfecta (Sin Diferencias)'
-                          : `Descuadre Aceptado dentro de Tolerancia ($${cashToleranceClp.toLocaleString('es-CL')} CLP)`}
+                        {user.role === 'administrador' ? (
+                          isFlagged
+                            ? 'REPORTE 1: TURNO DESCUADRADO (SUPERÓ TOLERANCIA)'
+                            : isPerfect
+                            ? 'Cuadratura Perfecta (Sin Diferencias)'
+                            : `Descuadre Aceptado dentro de Tolerancia ($${cashToleranceClp.toLocaleString('es-CL')} CLP)`
+                        ) : (
+                          'REPORTE DE CIERRE GENERADO EXITOSAMENTE'
+                        )}
                       </span>
-                      <span className="text-[11px] text-slate-600">
-                        Diferencia Neta en Caja:{' '}
-                        {discrepancyCash >= 0 ? '+' : ''}
-                        ${discrepancyCash.toLocaleString('es-CL')} CLP
-                      </span>
+                      {user.role === 'administrador' && (
+                        <span className="text-[11px] text-slate-600">
+                          Diferencia Neta en Caja:{' '}
+                          {discrepancyCash >= 0 ? '+' : ''}
+                          ${discrepancyCash.toLocaleString('es-CL')} CLP
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -702,8 +702,12 @@ export const CierreCajaCiego: React.FC = () => {
                       <tr>
                         <th className="py-2 px-3">Canal de Pago</th>
                         <th className="py-2 px-3 text-right">Monto Declarado</th>
-                        <th className="py-2 px-3 text-right">Monto Esperado</th>
-                        <th className="py-2 px-3 text-right">Diferencia</th>
+                        {user.role === 'administrador' && (
+                          <>
+                            <th className="py-2 px-3 text-right">Monto Esperado</th>
+                            <th className="py-2 px-3 text-right">Diferencia</th>
+                          </>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
@@ -714,12 +718,16 @@ export const CierreCajaCiego: React.FC = () => {
                         <td className="py-2.5 px-3 text-right font-bold text-slate-900">
                           ${(activeShift.declaredCash || 0).toLocaleString('es-CL')}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-slate-600">
-                          ${(activeShift.expectedCash || 0).toLocaleString('es-CL')}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                          ${(activeShift.discrepancyCash || 0).toLocaleString('es-CL')}
-                        </td>
+                        {user.role === 'administrador' && (
+                          <>
+                            <td className="py-2.5 px-3 text-right text-slate-600">
+                              ${(activeShift.expectedCash || 0).toLocaleString('es-CL')}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-bold text-slate-900">
+                              ${(activeShift.discrepancyCash || 0).toLocaleString('es-CL')}
+                            </td>
+                          </>
+                        )}
                       </tr>
 
                       <tr>
@@ -729,10 +737,14 @@ export const CierreCajaCiego: React.FC = () => {
                         <td className="py-2.5 px-3 text-right font-bold text-slate-900">
                           ${(activeShift.declaredCard || 0).toLocaleString('es-CL')}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-slate-600">
-                          ${(activeShift.expectedCard || 0).toLocaleString('es-CL')}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-bold text-slate-900">$0</td>
+                        {user.role === 'administrador' && (
+                          <>
+                            <td className="py-2.5 px-3 text-right text-slate-600">
+                              ${(activeShift.expectedCard || 0).toLocaleString('es-CL')}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-bold text-slate-900">$0</td>
+                          </>
+                        )}
                       </tr>
 
                       <tr>
@@ -742,10 +754,14 @@ export const CierreCajaCiego: React.FC = () => {
                         <td className="py-2.5 px-3 text-right font-bold text-slate-900">
                           ${(activeShift.declaredTransfer || 0).toLocaleString('es-CL')}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-slate-600">
-                          ${(activeShift.expectedTransfer || 0).toLocaleString('es-CL')}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-bold text-slate-900">$0</td>
+                        {user.role === 'administrador' && (
+                          <>
+                            <td className="py-2.5 px-3 text-right text-slate-600">
+                              ${(activeShift.expectedTransfer || 0).toLocaleString('es-CL')}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-bold text-slate-900">$0</td>
+                          </>
+                        )}
                       </tr>
 
                       <tr className="bg-slate-100 font-bold">
@@ -753,12 +769,16 @@ export const CierreCajaCiego: React.FC = () => {
                         <td className="py-2.5 px-3 text-right text-slate-900">
                           ${totalDeclared.toLocaleString('es-CL')}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-slate-900">
-                          ${totalExpected.toLocaleString('es-CL')}
-                        </td>
-                        <td className="py-2.5 px-3 text-right text-slate-900">
-                          ${(activeShift.discrepancyTotal || 0).toLocaleString('es-CL')}
-                        </td>
+                        {user.role === 'administrador' && (
+                          <>
+                            <td className="py-2.5 px-3 text-right text-slate-900">
+                              ${totalExpected.toLocaleString('es-CL')}
+                            </td>
+                            <td className="py-2.5 px-3 text-right text-slate-900">
+                              ${(activeShift.discrepancyTotal || 0).toLocaleString('es-CL')}
+                            </td>
+                          </>
+                        )}
                       </tr>
                     </tbody>
                   </table>

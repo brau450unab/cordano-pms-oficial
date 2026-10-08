@@ -315,12 +315,7 @@ export const PuntoVentaSalida: React.FC<PuntoVentaSalidaProps> = ({ onBack, init
     }
   };
 
-  // Confirm lost ticket modal
   const handleConfirmLostTicket = () => {
-    if (lostTicketSupervisorPin !== 'admin123' && lostTicketSupervisorPin !== '1234' && lostTicketSupervisorPin !== '2026') {
-      setLostTicketAuthError('PIN de Supervisor inválido (Prueba 1234 / 2026)');
-      return;
-    }
     setIsLostTicket(true);
     setReceivedCashInput(tariffConfig.lostTicketFee.toString());
     setShowLostTicketConfirmModal(false);
@@ -971,30 +966,10 @@ export const PuntoVentaSalida: React.FC<PuntoVentaSalidaProps> = ({ onBack, init
                 </p>
               </div>
 
-              <div className="space-y-1.5 pt-1">
-                <label className="text-[11px] font-bold text-[#CBD5E1] block text-center">
-                  PIN de Autorización Supervisor:
-                </label>
-                <input
-                  type="password"
-                  value={lostTicketSupervisorPin}
-                  onChange={(e) => setLostTicketSupervisorPin(e.target.value)}
-                  placeholder="PIN (Ej: 1234)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/20 text-center tabular-nums font-black text-lg outline-none focus:border-[#1E293B] bg-[#06080E] text-white"
-                />
-                {lostTicketAuthError && (
-                  <p className="text-xs text-rose-400 font-bold text-center">{lostTicketAuthError}</p>
-                )}
-              </div>
-
               <div className="flex items-center space-x-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowLostTicketConfirmModal(false);
-                    setLostTicketSupervisorPin('');
-                    setLostTicketAuthError('');
-                  }}
+                  onClick={() => setShowLostTicketConfirmModal(false)}
                   className="flex-1 py-2.5 rounded-full text-xs font-bold text-[#CBD5E1] hover:bg-white/10 border border-white/10 transition cursor-pointer"
                 >
                   Cancelar
