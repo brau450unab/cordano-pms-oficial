@@ -312,7 +312,7 @@ function MainAppContent() {
   const effectiveScreen = isLoggedIn ? currentScreen : 'landing';
 
   return (
-    <div className="h-screen w-screen bg-[#FEF9F5] flex flex-col font-sans text-[#2C1338] overflow-hidden selection:bg-[#E57CD8] selection:text-[#2C1338]">
+    <div className="h-screen w-screen bg-[#FAFAF5] flex flex-col font-sans text-[#2C1338] overflow-hidden selection:bg-[#E57CD8] selection:text-[#2C1338]">
       {/* Top Application Navbar - Only show if logged in */}
       {isLoggedIn && (
         <PlatformNavbar
