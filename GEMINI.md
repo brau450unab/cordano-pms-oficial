@@ -9,6 +9,20 @@
 6. **Localhost (Desarrollo Activo Centralizado)**: `http://localhost:3000` (Directorio oficial único: `C:\Users\BraulioAM\OneDrive - UNIVERSIDAD ANDRES BELLO\PROYECTOS ANTIGRAVITY\CORDANO PMS FINAL`).
    - **Regla Estricta de Carpeta Centralizada**: Esta es la **ÚNICA** carpeta activa del proyecto para Antigravity y desarrollo local. Cualquier otra carpeta anterior (`Downloads\cordano-pms-version-publicada`, `NUEVO PMS CORDANO`) queda **ANULADA, OBSOLETA Y EXCLUIDA DE ACTUALIZACIONES**. Todo cambio, ejecución y actualización futura se realiza obligatoriamente en `CORDANO PMS FINAL`.
 
+### 0.1. VERSIÓN CANÓNICA ACTIVA: v2.0.0 (MASTER RELEASE)
+- **Versión Vigente**: `v2.0.0` (Master Release - Directorio Oficial: `CORDANO PMS FINAL`). Ver especificación completa en [VERSION_CANONICA_v2.0.md](file:///C:/Users/BraulioAM/OneDrive%20-%20UNIVERSIDAD%20ANDRES%20BELLO/PROYECTOS%20ANTIGRAVITY/CORDANO%20PMS%20FINAL/VERSION_CANONICA_v2.0.md).
+- **Componentes Consolidados en v2.0.0**:
+  - Garita Operativa POS Split-Screen (`PosView.tsx`, `LiveOperationsView.tsx`).
+  - Matriz 2D Interactiva con Drag & Drop nativo y cambio rápido de plazas (`PatioMatrix2D.tsx`, `moveOrSwapVehicleSlot`).
+  - Ciclo Completo de Salida, Cobro y Emisión de Ticket Térmico 80mm (`CheckoutReceiptModal.tsx`, `generateExitReceiptPdf`, WhatsApp, ESC/POS).
+  - Cierre Ciego de Turno en Stepper de 4 etapas (`/operacion/cierre`, `CierreCajaCiego.tsx`, sellado SHA-256, Arqueo A4 con 2 firmas y 2 copias).
+  - Control de Turno y RBAC Estricto (bloqueo previo a apertura de turno, dominio exclusivo del cajero de turno `isShiftOwner`, visor para el resto).
+  - Notificaciones fijadas en esquina inferior izquierda (`bottom-4 left-4`).
+- **Clasificación de Versiones Anteriores (Legacy / Deprecated)**:
+  - `Downloads\cordano-pms-version-publicada`: **Versión Anterior v1.0.0 (Publicada previa)**. Congelada y obsoleta.
+  - `NUEVO PMS CORDANO`: **Versión Prototipo v0.x**. Anulada.
+  - Repositorios y ramas históricas: Puntos de restauración de versiones anteriores.
+
 ---
 
 ## 1. REGLAS DE TRABAJO MEDIANTE ANTIGRAVITY
