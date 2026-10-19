@@ -1,15 +1,15 @@
 # CORDANO PMS — ESPECIFICACIÓN DE VERSIÓN CANÓNICA MASTER v2.0.0
 **Ubicación Oficial**: Serrano 447, Iquique, Chile  
 **Fecha de Emisión**: 15 de Octubre de 2026  
-**Entorno Principal**: `C:\Users\BraulioAM\OneDrive - UNIVERSIDAD ANDRES BELLO\PROYECTOS ANTIGRAVITY\CORDANO PMS FINAL`  
+**Entorno Principal**: `C:\Users\BraulioAM\OneDrive - UNIVERSIDAD ANDRES BELLO\PROYECTOS ANTIGRAVITY\PROYECTO CORDANO ENTREGABLE\CORDANO PMS FINAL`  
 **Host de Desarrollo**: `http://localhost:3000`  
-**Estado**: **PRODUCCIÓN LOCAL CANÓNICA (MASTER RELEASE v2.0.0)**
+**Estado**: **PRODUCCIÓN LOCAL Y ONLINE CANÓNICA (MASTER RELEASE v2.0.0)**
 
 ---
 
 ## 1. DECLARACIÓN OFICIAL DE VERSIÓN Y ARQUITECTURA
 
-A partir de esta versión (`v2.0.0`), el paquete contenido en la carpeta **`CORDANO PMS FINAL`** se consagra como la **Única Fuente de la Verdad (Single Source of Truth)** para el desarrollo, despliegue y operación del sistema **Cordano Parking Management System (PMS)**.
+A partir de esta versión (`v2.0.0`), el paquete contenido en la carpeta **`CORDANO PMS FINAL`** dentro de **`PROYECTO CORDANO ENTREGABLE`** se consagra como la **Única Fuente de la Verdad (Single Source of Truth)** para el desarrollo, despliegue y operación del sistema **Cordano Parking Management System (PMS)**.
 
 Todas las versiones precedentes, descargas y repositorios anteriores se clasifican formalmente como **Versiones Anteriores / Legadas (Legacy)** y quedan congeladas exclusivamente con fines de auditoría y punto de restauración.
 
@@ -19,13 +19,13 @@ Todas las versiones precedentes, descargas y repositorios anteriores se clasific
 
 | Entorno / Ubicación | Versión | Clasificación | Estado Operativo | Directiva Antigravity |
 | :--- | :---: | :---: | :---: | :--- |
-| **`CORDANO PMS FINAL`** (`localhost:3000`) | **v2.0.0** | **CANÓNICA MASTER** | **ACTIVO (Principal)** | **Única carpeta de trabajo, desarrollo y ejecución.** |
-| **Google AI Studio App** (`e1c08131...`) | v1.x → v2.0.0 (Pendiente Sinc.) | Entorno de Prototipado Visual | Standby de Sincronización | Se sincroniza desde Localhost únicamente bajo confirmación. |
-| **Cloud Run (`cordano-pms`)** | v1.0.0 (Publicada) | Producción Remota Online | Operativa (Versión Anterior) | Recibe despliegue del Master v2.0.0 tras autorización. |
-| **GitHub Oficial (`cordano-pms-oficial`)** | v1.0.0 (Main) | Repositorio Oficial | Pendiente Push v2.0.0 | Se actualiza bajo orden explícita del usuario. |
+| **`CORDANO PMS FINAL`** (`localhost:3000`) | **v2.0.0** | **CANÓNICA MASTER** | **ACTIVO (Principal)** | **Única subcarpeta de trabajo, desarrollo y ejecución.** |
+| **Cloud Run (`https://cordanopms.ai.studio`)** | **v2.0.0** | **PRODUCCIÓN OFICIAL** | **ACTIVO (100% Tráfico - Rev 11)** | **Instancia pública oficial en línea.** |
+| **GitHub Oficial (`cordano-pms-oficial`)** | **v2.0.0** | **REPOSITORIO OFICIAL** | **SINCRONIZADO (`main`)** | **Código fuente canónico en control de versiones.** |
+| **Google AI Studio App** (`e1c08131...`) | v2.0.0 | Entorno de Prototipado Visual | Standby de Sincronización | Se sincroniza desde Localhost únicamente bajo confirmación. |
 | **GitHub Respaldo (`cordano-pms-respaldo`)** | Checkpoint v1.0 | Punto de Restauración | **CONGELADO / INTOCABLE** | Solo se actualiza al ordenar un nuevo checkpoint. |
-| **`Downloads\cordano-pms-version-publicada`** | v1.0.0 | **VERSIÓN ANTERIOR (LEGACY)** | **OBSOLETO** | **ANULADA / NO MODIFICAR**. Solo referencia histórica. |
-| **`NUEVO PMS CORDANO`** | v0.x | **PROTOTIPO ANTERIOR** | **OBSOLETO** | **ANULADA / NO MODIFICAR**. Excluida de actualizaciones. |
+| **`cordano-pms-version-publicada`** | v1.0.0 | **VERSIÓN ANTERIOR (LEGACY)** | **OBSOLETO / PURGABLE** | **ANULADA / LISTA PARA PURGA**. Solo aviso residual. |
+| **`NUEVO PMS CORDANO`** | v0.x | **PROTOTIPO ANTERIOR** | **OBSOLETO / PURGABLE** | **ANULADA / LISTA PARA PURGA**. Respaldada en histórico. |
 
 ---
 
