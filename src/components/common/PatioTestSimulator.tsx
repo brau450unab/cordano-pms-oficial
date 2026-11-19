@@ -98,10 +98,11 @@ export const PatioTestSimulator: React.FC<PatioTestSimulatorProps> = ({ onShowTo
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-16 right-5 z-40 px-3 py-1.5 rounded-full bg-[#1E1E2F] hover:bg-slate-800 text-white border border-slate-700 shadow-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer backdrop-blur-md active:scale-95 transition-all"
+        aria-label="Abrir Simulador de Supervisión y Patio"
+        className="fixed bottom-20 right-3.5 sm:bottom-16 sm:right-5 z-30 min-h-[44px] px-3.5 py-2 rounded-full bg-[#1E1E2F]/95 hover:bg-slate-800 text-white border border-slate-700/80 shadow-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer backdrop-blur-md active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none"
         title="Abrir Simulador de Supervisión y Patio"
       >
-        <FlaskConical className="w-3.5 h-3.5 text-pink-400" />
+        <FlaskConical className="w-4 h-4 text-pink-400" aria-hidden="true" />
         <span className="hidden sm:inline">Simulador</span>
       </button>
 

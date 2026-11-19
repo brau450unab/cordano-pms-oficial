@@ -1,5 +1,33 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Car, Truck, Bike, Printer, Play, Lock, Eye, AlertTriangle } from 'lucide-react';
+import {
+  Car,
+  Truck,
+  Bike,
+  Printer,
+  Play,
+  Lock,
+  Eye,
+  AlertTriangle,
+  Ticket,
+  CreditCard,
+  MapPin,
+  Map,
+  Banknote,
+  HardHat,
+  User,
+  Tag,
+  Globe,
+  Building2,
+  CheckCircle2,
+  Search,
+  Smartphone,
+  Receipt,
+  ShieldCheck,
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
+  RefreshCw,
+} from 'lucide-react';
 import { PaymentMethod } from '../../types';
 import { useParking } from '../../context/ParkingContext';
 
@@ -654,9 +682,11 @@ export const PosView: React.FC<PosViewProps> = ({
           <div className="space-y-3.5">
             {/* Banner de Estado de Turno */}
             {isShiftClosed ? (
-              <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 text-amber-900">
+              <div role="status" className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 text-amber-900">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xl">🔒</span>
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0">
+                    <Lock className="w-5 h-5" aria-hidden="true" />
+                  </div>
                   <div>
                     <span className="font-extrabold text-xs text-amber-950 block">Garita Bloqueada: Turno Cerrado</span>
                     <span className="text-[10px] text-amber-800">Declare fondo de $50.000 CLP para operar.</span>
@@ -665,15 +695,18 @@ export const PosView: React.FC<PosViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onInitiateOpenShift ? onInitiateOpenShift() : undefined}
-                  className="px-3.5 py-2 rounded-xl bg-[#E2498A] text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 cursor-pointer"
+                  aria-label="Iniciar nuevo turno con fondo de cincuenta mil pesos"
+                  className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:outline-none"
                 >
                   Iniciar Turno
                 </button>
               </div>
             ) : isViewerOnly ? (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-between gap-2.5 text-blue-900">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">👁️</span>
+              <div role="status" className="p-3 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-between gap-2.5 text-blue-900">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+                    <Eye className="w-4 h-4" aria-hidden="true" />
+                  </div>
                   <div>
                     <span className="font-extrabold text-xs block">Modo Solo Visualización</span>
                     <span className="text-[10px] text-blue-700">Turno abierto por {currentShift?.operatorName || 'otro operador'}.</span>
@@ -684,10 +717,10 @@ export const PosView: React.FC<PosViewProps> = ({
                 </span>
               </div>
             ) : (
-              <div className="p-3 bg-[#1E1E2F] text-white border border-slate-800 rounded-2xl flex items-center justify-between shadow-xs">
+              <div role="status" className="p-3 bg-[#1E1E2F] text-white border border-slate-800 rounded-2xl flex items-center justify-between shadow-xs">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#E2498A] flex items-center justify-center text-xs font-black shrink-0">
-                    👷
+                  <div className="w-8 h-8 rounded-xl bg-[#E2498A] flex items-center justify-center text-white font-black shrink-0">
+                    <HardHat className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-extrabold text-white truncate">
@@ -696,7 +729,10 @@ export const PosView: React.FC<PosViewProps> = ({
                     <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-300 font-mono">
                       <span className="text-pink-300 font-bold">{currentShift?.id || 'TRN-2026-ACT'}</span>
                       <span>·</span>
-                      <span className="text-emerald-400 font-bold">🟢 En Turno</span>
+                      <span className="text-emerald-400 font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
+                        En Turno
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -710,10 +746,11 @@ export const PosView: React.FC<PosViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onNavigate ? onNavigate('operacion_cierre') : undefined}
-                    className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-sm transition active:scale-95 cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+                    aria-label="Cerrar turno y realizar arqueo ciego"
+                    className="min-h-[44px] px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-sm transition active:scale-95 cursor-pointer whitespace-nowrap flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none"
                     title="Cerrar turno y realizar arqueo ciego"
                   >
-                    <span>🔒</span>
+                    <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                     <span className="hidden sm:inline">Cerrar Turno</span>
                     <span className="sm:hidden">Cerrar</span>
                   </button>
@@ -728,72 +765,83 @@ export const PosView: React.FC<PosViewProps> = ({
                 type="button"
                 onClick={handleReprintLastTicket}
                 title="Re-imprimir último ticket emitido (F8) - Respaldo ante atascos de papel"
-                className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-pink-50 border border-slate-200 text-slate-700 hover:text-[#C83472] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                aria-label="Re-imprimir último ticket emitido"
+                className="min-h-[44px] px-3 py-2 rounded-xl bg-white hover:bg-pink-50 border border-slate-200 text-slate-700 hover:text-[#C83472] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:outline-none"
               >
-                <Printer className="w-3.5 h-3.5" />
+                <Printer className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
                 <span>Re-imprimir Ticket</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-slate-100 text-slate-500">F8</span>
               </button>
             </div>
 
             {/* 4 Tabs Operativos del Cajero */}
-            <div className="grid grid-cols-4 bg-white p-1 rounded-2xl border border-slate-200 shadow-xs gap-1">
+            <div role="tablist" aria-label="Navegación de Garita Móvil" className="grid grid-cols-4 bg-white p-1 rounded-2xl border border-slate-200 shadow-xs gap-1">
               <button
                 type="button"
+                role="tab"
+                aria-selected={operadorMobileTab === 'entry'}
                 onClick={() => setOperadorMobileTab('entry')}
-                className={`py-2 px-1 rounded-xl text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer min-h-[46px] ${
+                className={`py-2 px-1 rounded-xl text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer min-h-[48px] focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none ${
                   operadorMobileTab === 'entry'
                     ? 'bg-[#E2498A] text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <span>🚗</span>
+                <Ticket className="w-4 h-4" aria-hidden="true" />
                 <span className="text-[11px] truncate">Ingreso</span>
               </button>
               <button
                 type="button"
+                role="tab"
+                aria-selected={operadorMobileTab === 'exit'}
                 onClick={() => setOperadorMobileTab('exit')}
-                className={`py-2 px-1 rounded-xl text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer min-h-[46px] ${
+                className={`py-2 px-1 rounded-xl text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer min-h-[48px] focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none ${
                   operadorMobileTab === 'exit'
                     ? 'bg-[#E2498A] text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <span>💳</span>
+                <CreditCard className="w-4 h-4" aria-hidden="true" />
                 <span className="text-[11px] truncate">Cobro</span>
               </button>
               <button
                 type="button"
+                role="tab"
+                aria-selected={operadorMobileTab === 'plano'}
                 onClick={() => setOperadorMobileTab('plano')}
-                className={`py-2 px-1 rounded-xl text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer min-h-[46px] ${
+                className={`py-2 px-1 rounded-xl text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer min-h-[48px] focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none ${
                   operadorMobileTab === 'plano'
                     ? 'bg-[#E2498A] text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <span>🗺️</span>
+                <Map className="w-4 h-4" aria-hidden="true" />
                 <span className="text-[11px] truncate">Patio 2D</span>
               </button>
               <button
                 type="button"
+                role="tab"
+                aria-selected={operadorMobileTab === 'caja'}
                 onClick={() => setOperadorMobileTab('caja')}
-                className={`py-2 px-1 rounded-xl text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer min-h-[46px] ${
+                className={`py-2 px-1 rounded-xl text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer min-h-[48px] focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none ${
                   operadorMobileTab === 'caja'
                     ? 'bg-[#E2498A] text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <span>💰</span>
+                <Banknote className="w-4 h-4" aria-hidden="true" />
                 <span className="text-[11px] truncate">Caja</span>
               </button>
             </div>
 
             {/* TAB OPERADOR: 1. INGRESO VEHICULAR */}
             {operadorMobileTab === 'entry' && (
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-fade-in font-sans">
+              <div role="tabpanel" aria-label="Registro de Entrada" className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-fade-in font-sans">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">🎟️</span>
+                    <div className="w-7 h-7 rounded-lg bg-pink-50 text-[#E2498A] flex items-center justify-center">
+                      <Ticket className="w-4 h-4" aria-hidden="true" />
+                    </div>
                     <div>
                       <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
                         Registro de Entrada
@@ -811,7 +859,7 @@ export const PosView: React.FC<PosViewProps> = ({
                   {selectedSlot ? (
                     <div className="flex items-center justify-between p-2.5 bg-pink-50/90 border-2 border-[#E2498A] rounded-xl animate-fade-in shadow-xs">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">📍</span>
+                        <MapPin className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
                         <div>
                           <span className="text-xs font-black uppercase text-[#E2498A] block">
                             Cupo Asignado: {selectedSlot <= 15 ? `A-${String(selectedSlot).padStart(2, '0')}` : `B-${String(selectedSlot).padStart(2, '0')}`}
@@ -822,7 +870,8 @@ export const PosView: React.FC<PosViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setSelectedSlot(null)}
-                        className="text-[10px] font-bold text-rose-600 bg-white border border-rose-200 px-2 py-0.5 rounded-lg cursor-pointer"
+                        aria-label="Liberar selección manual de cupo"
+                        className="text-[10px] font-bold text-rose-600 bg-white border border-rose-200 px-2 py-1 rounded-lg cursor-pointer min-h-[36px]"
                       >
                         ✕ Libre
                       </button>
@@ -830,7 +879,8 @@ export const PosView: React.FC<PosViewProps> = ({
                   ) : (
                     <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-500">
                       <span className="flex items-center gap-1.5 font-medium">
-                        <span>🎯</span> Asignación: <strong className="text-slate-800">Libre / Automática</strong>
+                        <MapPin className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                        Asignación: <strong className="text-slate-800">Libre / Automática</strong>
                       </span>
                       <span className="text-[10px] text-slate-400">(Toca un cupo en Patio 2D para fijar)</span>
                     </div>
@@ -838,16 +888,21 @@ export const PosView: React.FC<PosViewProps> = ({
 
                   {/* Campo Patente Táctil Grande */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    <label htmlFor="mobile-entry-plate" className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
                       Placa Patente del Vehículo
                     </label>
                     <input
+                      id="mobile-entry-plate"
                       ref={plateInputRef}
                       type="text"
                       maxLength={8}
                       value={entryPlate}
                       onChange={(e) => setEntryPlate(e.target.value.toUpperCase())}
                       placeholder="ABCD12..."
+                      inputMode="text"
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck="false"
                       className="w-full text-center py-3 text-2xl font-black font-mono tracking-widest uppercase rounded-2xl border-2 border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#E2498A] focus:outline-none transition-all shadow-inner"
                     />
                     
@@ -856,12 +911,12 @@ export const PosView: React.FC<PosViewProps> = ({
                       <div className="mt-1.5 flex items-center justify-center">
                         {plateValidation.isValidChilean ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 animate-fade-in">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
                             ✓ {plateValidation.formatDesc}
                           </span>
                         ) : plateValidation.isForeignOrCustom ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-300 animate-fade-in">
-                            <span>🌐</span>
+                            <Globe className="w-3 h-3 text-blue-600" aria-hidden="true" />
                             {plateValidation.formatDesc}
                           </span>
                         ) : (
@@ -889,21 +944,24 @@ export const PosView: React.FC<PosViewProps> = ({
                         { cat: 'Moto', rate: 25, icon: Bike },
                       ].map((item) => {
                         const Icon = item.icon;
+                        const isSelected = entryCategory === item.cat;
                         return (
                           <button
                             key={item.cat}
                             type="button"
+                            role="radio"
+                            aria-checked={isSelected}
                             onClick={() => {
                               setEntryCategory(item.cat as any);
                               setEntryRate(item.rate);
                             }}
-                            className={`p-2.5 rounded-xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
-                              entryCategory === item.cat
+                            className={`p-2.5 rounded-xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[56px] focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none ${
+                              isSelected
                                 ? 'border-[#E2498A] bg-[#FFF5F8] text-[#E2498A] shadow-xs'
                                 : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
                             }`}
                           >
-                            <Icon className="w-5 h-5 mb-1" />
+                            <Icon className="w-5 h-5 mb-1" aria-hidden="true" />
                             <div className="font-extrabold text-xs">{item.cat}</div>
                             <div className="text-[10px] font-mono font-bold mt-0.5">
                               ${item.rate}/min
@@ -918,11 +976,16 @@ export const PosView: React.FC<PosViewProps> = ({
                   <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/70 transition-all">
                     <button
                       type="button"
+                      aria-expanded={showOptionalClientData}
                       onClick={() => setShowOptionalClientData((prev) => !prev)}
-                      className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer select-none"
+                      className="w-full min-h-[44px] px-3.5 py-2.5 flex items-center justify-between text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none"
                     >
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[#E2498A] font-bold">{showOptionalClientData ? '▾' : '▸'}</span>
+                        {showOptionalClientData ? (
+                          <ChevronDown className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
+                        )}
                         <span className="text-slate-800 font-extrabold">
                           {showOptionalClientData ? 'Ocultar datos adicionales' : '+ Datos de Cliente / WhatsApp (Opcional)'}
                         </span>
@@ -941,51 +1004,55 @@ export const PosView: React.FC<PosViewProps> = ({
                     {showOptionalClientData && (
                       <div className="p-3.5 pt-1 space-y-3 border-t border-slate-200/80 bg-white animate-fade-in">
                         {detectedAgreement && (
-                          <div className="p-2 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 font-medium">
-                            🏢 Convenio: <strong>{detectedAgreement.companyName || detectedAgreement.contactName}</strong>
+                          <div className="p-2 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 font-medium flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-blue-700" aria-hidden="true" />
+                            <span>Convenio: <strong>{detectedAgreement.companyName || detectedAgreement.contactName}</strong></span>
                           </div>
                         )}
 
                         <div className="space-y-2.5">
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                            <label htmlFor="mobile-entry-name" className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
                               Nombre del Cliente / Particular
                             </label>
                             <input
+                              id="mobile-entry-name"
                               type="text"
                               value={entryName}
                               onChange={(e) => setEntryName(e.target.value)}
                               placeholder="Particular / Nombre cliente..."
-                              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#E2498A]"
+                              className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#E2498A]"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center justify-between">
+                            <label htmlFor="mobile-entry-phone" className="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center justify-between">
                               <span>Teléfono Móvil (WhatsApp)</span>
                               <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> wa.me
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" /> wa.me
                               </span>
                             </label>
                             <input
+                              id="mobile-entry-phone"
                               type="tel"
                               value={entryPhone}
                               onChange={(e) => setEntryPhone(e.target.value)}
                               placeholder="+56 9 1234 5678"
-                              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#E2498A]"
+                              className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#E2498A]"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                            <label htmlFor="mobile-entry-obs" className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
                               Observación de Ingreso / Daños Preexistentes
                             </label>
                             <input
+                              id="mobile-entry-obs"
                               type="text"
                               value={entryObs}
                               onChange={(e) => setEntryObs(e.target.value)}
                               placeholder="Detalles físicos, rayones preexistentes..."
-                              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#E2498A]"
+                              className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#E2498A]"
                             />
                           </div>
                         </div>
@@ -997,13 +1064,13 @@ export const PosView: React.FC<PosViewProps> = ({
                   <button
                     type="submit"
                     disabled={!entryPlate || entryPlate.replace(/[^a-zA-Z0-9]/g, '').length < 3 || isShiftClosed || isViewerOnly}
-                    className={`w-full min-h-[52px] py-3.5 px-4 rounded-2xl text-white text-sm font-black transition-all flex items-center justify-center gap-2 shadow-md ${
+                    className={`w-full min-h-[52px] py-3.5 px-4 rounded-2xl text-white text-sm font-black transition-all flex items-center justify-center gap-2 shadow-md focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:outline-none ${
                       !entryPlate || entryPlate.replace(/[^a-zA-Z0-9]/g, '').length < 3 || isShiftClosed || isViewerOnly
                         ? 'bg-slate-300 cursor-not-allowed text-slate-500'
                         : 'bg-[#E2498A] hover:bg-[#C83472] active:scale-[0.99] cursor-pointer'
                     }`}
                   >
-                    <span>🎟️</span>
+                    <Ticket className="w-4 h-4" aria-hidden="true" />
                     <span>
                       {isShiftClosed
                         ? 'Turno Cerrado (POS Bloqueado)'
@@ -1018,10 +1085,12 @@ export const PosView: React.FC<PosViewProps> = ({
 
             {/* TAB OPERADOR: 2. COBRO & SALIDA VEHICULAR */}
             {operadorMobileTab === 'exit' && (
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-fade-in font-sans">
+              <div role="tabpanel" aria-label="Liquidación de Cobro" className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-fade-in font-sans">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">💳</span>
+                    <div className="w-7 h-7 rounded-lg bg-pink-50 text-[#E2498A] flex items-center justify-center">
+                      <CreditCard className="w-4 h-4" aria-hidden="true" />
+                    </div>
                     <div>
                       <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
                         Liquidación de Cobro
@@ -1036,7 +1105,7 @@ export const PosView: React.FC<PosViewProps> = ({
                         setSelectedExitVehicle(null);
                         setExitSearchQuery('');
                       }}
-                      className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg hover:bg-rose-100 transition-colors"
+                      className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-lg hover:bg-rose-100 transition-colors min-h-[36px]"
                     >
                       ← Cambiar Auto
                     </button>
@@ -1047,11 +1116,12 @@ export const PosView: React.FC<PosViewProps> = ({
                   <div className="space-y-3">
                     {/* Buscador de Patente */}
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1 flex items-center justify-between">
+                      <label htmlFor="mobile-exit-search" className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1 flex items-center justify-between">
                         <span>Buscar Vehículo para Liquidar</span>
                         <span className="text-[10px] text-pink-600 font-bold">Predictivo ≥ 3 caracteres</span>
                       </label>
                       <input
+                        id="mobile-exit-search"
                         ref={exitSearchInputRef}
                         type="text"
                         value={exitSearchQuery}
@@ -1064,6 +1134,8 @@ export const PosView: React.FC<PosViewProps> = ({
                           }
                         }}
                         placeholder="Buscar por patente (ej. ABCD12)..."
+                        inputMode="text"
+                        autoCapitalize="characters"
                         className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-sm font-bold uppercase text-slate-900 focus:bg-white focus:border-[#E2498A] focus:outline-none transition-all"
                       />
 
@@ -1072,7 +1144,7 @@ export const PosView: React.FC<PosViewProps> = ({
                         <div className="mt-2 p-2 bg-pink-50/80 border border-[#E2498A]/30 rounded-xl space-y-1.5 animate-fade-in">
                           <div className="flex items-center justify-between text-[10px] font-bold text-[#C83472]">
                             <span className="flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#E2498A] animate-ping" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#E2498A] animate-ping" aria-hidden="true" />
                               Coincidencias predictivas ({exitFilteredVehicles.length}):
                             </span>
                             <span className="text-slate-500 font-mono">↵ Enter para elegir 1ª</span>
@@ -1083,7 +1155,7 @@ export const PosView: React.FC<PosViewProps> = ({
                                 key={v.plate}
                                 type="button"
                                 onClick={() => loadVehicleIntoExit(v)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs min-h-[40px] focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none ${
                                   idx === 0
                                     ? 'bg-[#E2498A] text-white hover:bg-[#C83472]'
                                     : 'bg-white text-slate-800 border border-slate-200 hover:border-[#E2498A]'
@@ -1114,7 +1186,7 @@ export const PosView: React.FC<PosViewProps> = ({
                           <div
                             key={v.plate}
                             onClick={() => loadVehicleIntoExit(v)}
-                            className="p-3 rounded-2xl border border-slate-200 hover:border-[#E2498A] bg-white hover:bg-pink-50/20 flex items-center justify-between gap-2 transition-all cursor-pointer shadow-xs active:scale-[0.99]"
+                            className="p-3 rounded-2xl border border-slate-200 hover:border-[#E2498A] bg-white hover:bg-pink-50/20 flex items-center justify-between gap-2 transition-all cursor-pointer shadow-xs active:scale-[0.99] min-h-[56px]"
                           >
                             <div className="flex items-center gap-2.5">
                               <span className="license-plate-chip px-2.5 py-1 text-xs bg-slate-900 text-white font-extrabold rounded">
@@ -1124,8 +1196,9 @@ export const PosView: React.FC<PosViewProps> = ({
                                 <div className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
                                   <span>{v.slotCode || `Cupo ${v.slot}`}</span>
                                   <span className="text-[10px] text-slate-400">({v.cat})</span>
-                                  <span className="text-[10px] text-slate-600 font-semibold truncate max-w-[120px]">
-                                    👤 {v.client || 'Particular'}
+                                  <span className="text-[10px] text-slate-600 font-semibold truncate max-w-[120px] flex items-center gap-1">
+                                    <User className="w-3 h-3 text-slate-400" aria-hidden="true" />
+                                    {v.client || 'Particular'}
                                   </span>
                                 </div>
                                 <div className="text-[10px] text-slate-500 font-mono">
@@ -1137,8 +1210,9 @@ export const PosView: React.FC<PosViewProps> = ({
                               <div className="text-xs font-black font-mono text-[#E2498A] tabular-nums">
                                 ${(v.durationMin * (v.rate || 25)).toLocaleString('es-CL')}
                               </div>
-                              <span className="text-[10px] font-bold text-slate-400">
-                                Cobrar →
+                              <span className="text-[10px] font-bold text-slate-400 flex items-center justify-end gap-0.5">
+                                <span>Cobrar</span>
+                                <ArrowRight className="w-3 h-3" aria-hidden="true" />
                               </span>
                             </div>
                           </div>
@@ -1155,8 +1229,11 @@ export const PosView: React.FC<PosViewProps> = ({
                         <span className="license-plate-chip px-3 py-1 text-sm bg-slate-900 text-white font-extrabold rounded-md">
                           {selectedExitVehicle.plate}
                         </span>
-                        <span className="text-xs font-bold text-slate-700">
-                          {selectedExitVehicle.slotCode || `Cupo ${selectedExitVehicle.slot}`} · {selectedExitVehicle.cat} · 👤 {selectedExitVehicle.client || 'Particular'}
+                        <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                          <span>{selectedExitVehicle.slotCode || `Cupo ${selectedExitVehicle.slot}`} · {selectedExitVehicle.cat}</span>
+                          <span className="text-slate-300">·</span>
+                          <User className="w-3 h-3 text-slate-400" aria-hidden="true" />
+                          <span>{selectedExitVehicle.client || 'Particular'}</span>
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/80">
@@ -1203,26 +1280,26 @@ export const PosView: React.FC<PosViewProps> = ({
                         type="button"
                         onClick={() => setPinModalType('DISCOUNT')}
                         disabled={isShiftClosed || isViewerOnly}
-                        className={`py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1.5 transition ${
+                        className={`min-h-[44px] py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1.5 transition focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none ${
                           isShiftClosed || isViewerOnly
                             ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                            : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700 cursor-pointer shadow-xs'
+                            : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700 cursor-pointer shadow-xs active:scale-95'
                         }`}
                       >
-                        <span>🏷️</span>
+                        <Tag className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
                         <span>Descuento</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setPinModalType('LOST_TICKET')}
                         disabled={isShiftClosed || isViewerOnly}
-                        className={`py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1.5 transition ${
+                        className={`min-h-[44px] py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1.5 transition focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
                           isShiftClosed || isViewerOnly
                             ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                            : 'bg-amber-50 border-amber-200 hover:bg-amber-100 text-amber-900 cursor-pointer shadow-xs'
+                            : 'bg-amber-50 border-amber-200 hover:bg-amber-100 text-amber-900 cursor-pointer shadow-xs active:scale-95'
                         }`}
                       >
-                        <span>⚠️</span>
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
                         <span>Ticket Extraviado</span>
                       </button>
                     </div>
@@ -1234,24 +1311,30 @@ export const PosView: React.FC<PosViewProps> = ({
                       </label>
                       <div className="grid grid-cols-3 gap-2">
                         {[
-                          { id: 'efectivo', label: 'Efectivo', icon: '💵' },
-                          { id: 'tarjeta', label: 'Tarjeta POS', icon: '💳' },
-                          { id: 'transferencia', label: 'Transferencia', icon: '📱' },
-                        ].map((m) => (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => setCheckoutPaymentMethod(m.id as any)}
-                            className={`p-2.5 rounded-xl border-2 text-center transition-all cursor-pointer ${
-                              checkoutPaymentMethod === m.id
-                                ? 'border-[#E2498A] bg-[#FFF5F8] text-[#E2498A] shadow-xs'
-                                : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                            }`}
-                          >
-                            <div className="text-base">{m.icon}</div>
-                            <div className="font-extrabold text-[11px] mt-0.5">{m.label}</div>
-                          </button>
-                        ))}
+                          { id: 'efectivo', label: 'Efectivo', icon: Banknote },
+                          { id: 'tarjeta', label: 'Tarjeta POS', icon: CreditCard },
+                          { id: 'transferencia', label: 'Transferencia', icon: Smartphone },
+                        ].map((m) => {
+                          const Icon = m.icon;
+                          const isSelected = checkoutPaymentMethod === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={isSelected}
+                              onClick={() => setCheckoutPaymentMethod(m.id as any)}
+                              className={`p-2.5 rounded-xl border-2 text-center transition-all cursor-pointer min-h-[52px] flex flex-col items-center justify-center focus-visible:ring-2 focus-visible:ring-[#E2498A] focus-visible:outline-none ${
+                                isSelected
+                                  ? 'border-[#E2498A] bg-[#FFF5F8] text-[#E2498A] shadow-xs'
+                                  : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              <Icon className="w-4 h-4" aria-hidden="true" />
+                              <div className="font-extrabold text-[11px] mt-1">{m.label}</div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -1284,7 +1367,7 @@ export const PosView: React.FC<PosViewProps> = ({
                                   setCashGiven((currentVal + b.add).toString());
                                 }
                               }}
-                              className="py-1.5 px-1 bg-white border border-emerald-300 rounded-lg text-[10px] font-bold text-emerald-900 hover:bg-emerald-100 transition-colors cursor-pointer"
+                              className="min-h-[44px] py-1.5 px-1 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 hover:bg-emerald-100 transition-colors cursor-pointer flex items-center justify-center active:scale-95 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                             >
                               {b.label}
                             </button>
@@ -1292,13 +1375,15 @@ export const PosView: React.FC<PosViewProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-500">$</span>
+                          <label htmlFor="mobile-cash-given" className="text-xs font-bold text-slate-500">$</label>
                           <input
+                            id="mobile-cash-given"
                             type="number"
                             value={cashGiven}
                             onChange={(e) => setCashGiven(e.target.value)}
                             placeholder="Monto entregado..."
-                            className="w-full h-9 px-3 rounded-xl border border-emerald-300 bg-white font-mono text-sm font-black text-slate-900 focus:outline-none focus:border-emerald-600"
+                            inputMode="numeric"
+                            className="w-full h-11 px-3 rounded-xl border border-emerald-300 bg-white font-mono text-sm font-black text-slate-900 focus:outline-none focus:border-emerald-600"
                           />
                         </div>
 
@@ -1318,13 +1403,13 @@ export const PosView: React.FC<PosViewProps> = ({
                         type="button"
                         onClick={handleConfirmCheckout}
                         disabled={isShiftClosed || isViewerOnly}
-                        className={`w-full min-h-[52px] py-3.5 px-4 rounded-2xl text-white text-sm font-black transition-all flex items-center justify-center gap-2 shadow-md ${
+                        className={`w-full min-h-[52px] py-3.5 px-4 rounded-2xl text-white text-sm font-black transition-all flex items-center justify-center gap-2 shadow-md focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:outline-none ${
                           isShiftClosed || isViewerOnly
                             ? 'bg-slate-300 cursor-not-allowed text-slate-500'
                             : 'bg-[#E2498A] hover:bg-[#C83472] active:scale-[0.99] cursor-pointer'
                         }`}
                       >
-                        <span>💳</span>
+                        <CreditCard className="w-5 h-5 text-white" aria-hidden="true" />
                         <span>
                           {isShiftClosed
                             ? 'Turno Cerrado'
@@ -1348,9 +1433,9 @@ export const PosView: React.FC<PosViewProps> = ({
                             }
                           }
                         }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                        className="w-full min-h-[44px] py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer active:scale-98 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
                       >
-                        <Printer className="w-4 h-4 text-slate-600" />
+                        <Printer className="w-4 h-4 text-slate-600" aria-hidden="true" />
                         <span>Reimprimir Boleta Térmica ESC/POS (58-80mm)</span>
                       </button>
                     </div>
@@ -1361,15 +1446,15 @@ export const PosView: React.FC<PosViewProps> = ({
 
             {/* TAB OPERADOR: 3. PATIO 2D */}
             {operadorMobileTab === 'plano' && (
-              <div className="space-y-3 animate-fade-in font-sans">
-                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+              <div role="tabpanel" aria-label="Plano de Patio 2D" className="space-y-3 animate-fade-in font-sans">
+                <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span>🗺️</span>
+                    <Map className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
                     <span className="text-xs font-extrabold text-slate-800">
                       Plano Serrano 447 (30 Plazas)
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                     {freeSlotsCount} Libres
                   </span>
                 </div>
@@ -1412,10 +1497,12 @@ export const PosView: React.FC<PosViewProps> = ({
 
             {/* TAB OPERADOR: 4. CAJA & ARQUEO CIEGO */}
             {operadorMobileTab === 'caja' && (
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-fade-in font-sans">
+              <div role="tabpanel" aria-label="Control de Caja de Garita" className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-fade-in font-sans">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">💰</span>
+                    <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+                      <Banknote className="w-4 h-4" aria-hidden="true" />
+                    </div>
                     <div>
                       <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
                         Control de Caja de Garita
@@ -1437,15 +1524,26 @@ export const PosView: React.FC<PosViewProps> = ({
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                     <span className="text-[10px] text-slate-400 font-sans block uppercase font-bold">Estado del Turno</span>
-                    <span className="text-xs font-black text-emerald-600 mt-1 block">
-                      {isShiftClosed ? '🔒 Cerrado' : '🟢 Activo en Curso'}
+                    <span className="text-xs font-black text-emerald-600 mt-1 flex items-center gap-1.5">
+                      {isShiftClosed ? (
+                        <>
+                          <Lock className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+                          <span>Cerrado</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
+                          <span>Activo en Curso</span>
+                        </>
+                      )}
                     </span>
                   </div>
                 </div>
 
                 <div className="p-3 bg-purple-50/60 border border-purple-200 rounded-2xl text-xs text-purple-900 space-y-1">
                   <span className="font-bold flex items-center gap-1.5">
-                    <span>🛡️</span> Política de Arqueo Ciego (Regla #3):
+                    <ShieldCheck className="w-4 h-4 text-purple-700" aria-hidden="true" />
+                    <span>Política de Arqueo Ciego (Regla #3):</span>
                   </span>
                   <p className="text-[11px] text-purple-800 leading-relaxed">
                     La recaudación acumulada y el balance teórico se mantienen ocultos al cajero. Al terminar su turno, declare el efectivo exacto en gaveta y sobre entregado en el módulo de arqueo.
@@ -1463,13 +1561,14 @@ export const PosView: React.FC<PosViewProps> = ({
                       if (onNavigate) onNavigate('operacion_cierre');
                     }}
                     disabled={isShiftClosed || isViewerOnly}
-                    className={`w-full min-h-[50px] py-3 px-4 rounded-2xl text-white text-xs font-extrabold transition-all flex items-center justify-center gap-2 shadow-sm ${
+                    aria-label="Realizar arqueo ciego y cierre de turno"
+                    className={`w-full min-h-[50px] py-3 px-4 rounded-2xl text-white text-xs font-extrabold transition-all flex items-center justify-center gap-2 shadow-sm focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:outline-none ${
                       isShiftClosed || isViewerOnly
                         ? 'bg-slate-300 cursor-not-allowed text-slate-500'
                         : 'bg-[#E2498A] hover:bg-[#C83472] active:scale-[0.99] cursor-pointer'
                     }`}
                   >
-                    <span>🔒</span>
+                    <Lock className="w-4 h-4" aria-hidden="true" />
                     <span>{isViewerOnly ? 'Arqueo Bloqueado (Solo Titular)' : 'Realizar Arqueo Ciego & Cierre de Turno'}</span>
                   </button>
 
@@ -1487,13 +1586,14 @@ export const PosView: React.FC<PosViewProps> = ({
                       onOpenManualTransaction();
                     }}
                     disabled={isShiftClosed || isViewerOnly}
-                    className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition ${
+                    aria-label="Registrar movimiento manual de caja"
+                    className={`w-full min-h-[46px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none ${
                       isShiftClosed || isViewerOnly
                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer active:scale-98'
                     }`}
                   >
-                    <span>💵</span>
+                    <Banknote className="w-4 h-4 text-slate-600" aria-hidden="true" />
                     <span>Registrar Movimiento Manual de Caja {isViewerOnly ? '(Solo Titular)' : ''}</span>
                   </button>
                 </div>
@@ -1507,9 +1607,11 @@ export const PosView: React.FC<PosViewProps> = ({
           <div className="space-y-4">
             {/* Banner de Estado de Turno para Supervisor */}
             {isShiftClosed && (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 text-amber-900">
+              <div role="status" className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 text-amber-900">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-lg">🔒</span>
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0">
+                    <Lock className="w-4 h-4" aria-hidden="true" />
+                  </div>
                   <div>
                     <span className="font-extrabold text-xs text-amber-950 block">Turno Garita Cerrado</span>
                     <span className="text-[10px] text-amber-800">Modo supervisión activo (solo lectura).</span>

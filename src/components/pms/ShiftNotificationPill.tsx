@@ -148,30 +148,33 @@ export const ShiftNotificationPill: React.FC<ShiftNotificationPillProps> = ({
           <button
             type="button"
             onClick={onOpenAperturaModal}
-            className="px-3 py-1.5 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-black text-xs transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
+            aria-label="Iniciar turno de caja con fondo de cincuenta mil pesos"
+            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-black text-xs transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:outline-none"
           >
             <span>Iniciar</span>
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
 
           {/* Minimizar a Chip */}
           <button
             type="button"
             onClick={() => handleToggleMinimize(true)}
-            className="w-7 h-7 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+            aria-label="Minimizar aviso de turno a botón discreto"
+            className="min-w-[44px] min-h-[44px] rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
             title="Minimizar a botón discreto"
           >
-            <Minus className="w-3.5 h-3.5" />
+            <Minus className="w-4 h-4" aria-hidden="true" />
           </button>
 
           {/* Posponer / Cerrar */}
           <button
             type="button"
             onClick={() => handleSnooze(15)}
-            className="w-7 h-7 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+            aria-label="Posponer aviso de turno por quince minutos"
+            className="min-w-[44px] min-h-[44px] rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
             title="Posponer por 15 minutos"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>

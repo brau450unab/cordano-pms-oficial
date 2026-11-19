@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Lock, Play } from 'lucide-react';
+import {
+  Lock,
+  Play,
+  Crown,
+  ShieldCheck,
+  HardHat,
+  RefreshCw,
+  LogOut,
+  DollarSign,
+  BarChart3,
+  AlertTriangle,
+  KeyRound,
+  X,
+} from 'lucide-react';
 import { AppScreen } from '../../types';
 import { useParking } from '../../context/ParkingContext';
 
@@ -170,6 +183,17 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
       setInternalTimer('00:00:00');
     }
   }, [isShiftActive, currentShift?.startTime]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isMobileDrawerOpen) setIsMobileDrawerOpen(false);
+        if (isAdminAuthModalOpen) setIsAdminAuthModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileDrawerOpen, isAdminAuthModalOpen]);
 
   
 
@@ -380,8 +404,23 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-extrabold text-white truncate">{operatorName}</div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
-                        {user?.role === 'administrador' ? '👑 Administrador' : user?.role === 'supervisor' ? '🛡️ Supervisor' : '👷 Operador Garita'}
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-700 text-slate-300 flex items-center gap-1.5">
+                        {user?.role === 'administrador' ? (
+                          <>
+                            <Crown className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
+                            Administrador
+                          </>
+                        ) : user?.role === 'supervisor' ? (
+                          <>
+                            <ShieldCheck className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" />
+                            Supervisor
+                          </>
+                        ) : (
+                          <>
+                            <HardHat className="w-3.5 h-3.5 text-pink-400" aria-hidden="true" />
+                            Operador Garita
+                          </>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -397,9 +436,9 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                     }
                     setIsMobileDrawerOpen(false);
                   }}
-                  className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-[#2D2D44] hover:bg-slate-700 border border-slate-600 text-xs font-bold text-pink-300 transition-colors flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                  className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-[#2D2D44] hover:bg-slate-700 border border-slate-600 text-xs font-bold text-pink-300 transition-colors flex items-center justify-center gap-2 cursor-pointer active:scale-98 focus:outline-none focus:ring-2 focus:ring-pink-400"
                 >
-                  <span>🔄</span>
+                  <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Cambiar a {user?.role === 'administrador' ? 'Operador Garita' : 'Administrador'}</span>
                 </button>
               </div>
@@ -416,8 +455,9 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                       ACTIVO
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-950 text-amber-300 border border-amber-800">
-                      🔒 CERRADO
+                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-950 text-amber-300 border border-amber-800">
+                      <Lock className="w-3 h-3 text-amber-400" aria-hidden="true" />
+                      CERRADO
                     </span>
                   )}
                 </div>
@@ -452,9 +492,9 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                       onNavigate('operacion_cierre');
                       setIsMobileDrawerOpen(false);
                     }}
-                    className="w-full min-h-[46px] py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-98"
+                    className="w-full min-h-[46px] py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-98 focus:outline-none focus:ring-2 focus:ring-rose-400"
                   >
-                    <span>🔒</span>
+                    <Lock className="w-4 h-4 text-white" aria-hidden="true" />
                     <span>Arqueo Ciego / Cerrar Turno</span>
                   </button>
                 ) : (
@@ -464,9 +504,9 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                       if (onInitiateOpenShift) onInitiateOpenShift();
                       setIsMobileDrawerOpen(false);
                     }}
-                    className="w-full min-h-[46px] py-2.5 px-3 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-98"
+                    className="w-full min-h-[46px] py-2.5 px-3 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-98 focus:outline-none focus:ring-2 focus:ring-pink-400"
                   >
-                    <span>🚀</span>
+                    <Play className="w-4 h-4 fill-current text-white" aria-hidden="true" />
                     <span>Iniciar Turno con Fondo $50.000</span>
                   </button>
                 )}
@@ -512,7 +552,7 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
 
                 {overstayVehicles.length > 0 && (
                   <div className="p-2.5 rounded-xl bg-amber-950/60 border border-amber-800/80 text-amber-200 text-xs flex items-center gap-2">
-                    <span>⚠️</span>
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
                     <span><strong>{overstayVehicles.length}</strong> vehículos con sobreestadía (+2 hrs)</span>
                   </div>
                 )}
@@ -522,7 +562,7 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
               <div className="p-3.5 rounded-2xl bg-[#252538] border border-slate-700 space-y-3 font-sans">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm">📊</span>
+                    <BarChart3 className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
                     <span className="text-[11px] font-mono font-bold text-gray-300 uppercase tracking-wider">
                       Ingresos por Hora (Hoy)
                     </span>
@@ -606,7 +646,7 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
               <div className="p-3.5 rounded-2xl bg-[#252538] border border-slate-700 space-y-3 font-sans">
                 <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm">💰</span>
+                    <DollarSign className="w-4 h-4 text-emerald-400" aria-hidden="true" />
                     <span className="text-[11px] font-mono font-bold text-gray-300 uppercase tracking-wider">
                       Transacciones del Día
                     </span>
@@ -680,7 +720,7 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                     onNavigate('settings');
                     setIsMobileDrawerOpen(false);
                   }}
-                  className="w-full min-h-[48px] py-2.5 px-3 rounded-xl bg-[#2D2D44] hover:bg-slate-700 text-gray-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer active:scale-98"
+                  className="w-full min-h-[48px] py-2.5 px-3 rounded-xl bg-[#2D2D44] hover:bg-slate-700 text-gray-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer active:scale-98 focus:outline-none focus:ring-2 focus:ring-pink-400"
                 >
                   <svg className="w-4 h-4 text-[#E2498A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -695,9 +735,9 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                     if (onLogout) onLogout();
                     setIsMobileDrawerOpen(false);
                   }}
-                  className="w-full min-h-[48px] py-2 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-800/80 text-rose-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer active:scale-98"
+                  className="w-full min-h-[48px] py-2 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-800/80 text-rose-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer active:scale-98 focus:outline-none focus:ring-2 focus:ring-rose-400"
                 >
-                  <span>🚪</span>
+                  <LogOut className="w-4 h-4 text-rose-300" aria-hidden="true" />
                   <span>Cerrar Sesión</span>
                 </button>
               </div>
@@ -707,14 +747,15 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
       )}
 
       {/* ── DOCK INFERIOR TÁCTIL RESPONSIVO Y ADAPTADO AL ROL ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#1E1E2F]/95 border-t border-slate-700/80 px-2 py-1.5 flex items-center justify-around shadow-2xl backdrop-blur-md">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#1E1E2F]/95 border-t border-slate-700/80 px-2 py-1.5 flex items-center justify-around shadow-2xl backdrop-blur-md" role="navigation" aria-label="Navegación principal móvil">
         {user?.role === 'operador' ? (
           <>
             {/* Operador Tab 1: Garita POS */}
             <button
               type="button"
               onClick={() => onNavigate('pos')}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-current={isActive('pos') ? 'page' : undefined}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 isActive('pos')
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -731,7 +772,8 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('map')}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-current={isActive('map') ? 'page' : undefined}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 isActive('map')
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -748,7 +790,8 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('operacion_cierre')}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-current={isActive('operacion_cierre') ? 'page' : undefined}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 isActive('operacion_cierre')
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -765,7 +808,8 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(true)}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-expanded={isMobileDrawerOpen}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 isMobileDrawerOpen || (!isActive('pos') && !isActive('map') && !isActive('operacion_cierre'))
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -787,7 +831,8 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                 if (onSelectMobileTab) onSelectMobileTab('supervision');
                 onNavigate('menu');
               }}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-current={activeMobileTab === 'supervision' || (!activeMobileTab && isActive('menu')) ? 'page' : undefined}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 activeMobileTab === 'supervision' || (!activeMobileTab && isActive('menu'))
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -807,7 +852,8 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                 if (onSelectMobileTab) onSelectMobileTab('patio');
                 onNavigate('map');
               }}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-current={activeMobileTab === 'patio' || activeMobileTab === 'plano' || (!activeMobileTab && isActive('map')) ? 'page' : undefined}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 activeMobileTab === 'patio' || activeMobileTab === 'plano' || (!activeMobileTab && isActive('map'))
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -827,7 +873,8 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                 if (onSelectMobileTab) onSelectMobileTab('flujo');
                 onNavigate('pos');
               }}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-current={activeMobileTab === 'flujo' || activeMobileTab === 'cronologia' ? 'page' : undefined}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 activeMobileTab === 'flujo' || activeMobileTab === 'cronologia'
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -847,7 +894,8 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                 if (onSelectMobileTab) onSelectMobileTab('reportes');
                 onNavigate('reports');
               }}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-current={activeMobileTab === 'reportes' || (!activeMobileTab && isActive('reports')) ? 'page' : undefined}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 activeMobileTab === 'reportes' || (!activeMobileTab && isActive('reports'))
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -867,7 +915,8 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                 if (onSelectMobileTab) onSelectMobileTab('ajustes');
                 onNavigate('settings');
               }}
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              aria-current={activeMobileTab === 'ajustes' || (!activeMobileTab && isActive('settings')) ? 'page' : undefined}
+              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                 activeMobileTab === 'ajustes' || (!activeMobileTab && isActive('settings'))
                   ? 'text-[#E2498A] font-black'
                   : 'text-gray-400 font-medium hover:text-white'
@@ -890,7 +939,7 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <span className="w-8 h-8 rounded-xl bg-pink-100 text-[#E2498A] flex items-center justify-center text-base font-bold">
-                  🔐
+                  <KeyRound className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
                 </span>
                 <div>
                   <h4 className="font-extrabold text-sm text-slate-900 leading-tight">Elevación de Privilegios</h4>
@@ -900,9 +949,10 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAdminAuthModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 font-bold text-xs"
+                className="w-9 h-9 min-h-[44px] min-w-[44px] rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center font-bold text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400"
+                aria-label="Cerrar elevación de privilegios"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -927,10 +977,11 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
               className="space-y-3"
             >
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                <label htmlFor="admin-elevation-password" className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
                   Clave o PIN de Supervisor
                 </label>
                 <input
+                  id="admin-elevation-password"
                   type="password"
                   autoFocus
                   value={adminPasswordInput}
@@ -939,13 +990,13 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                     if (adminAuthError) setAdminAuthError(null);
                   }}
                   placeholder="Ingrese clave o PIN (ej. admin123)..."
-                  className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 font-mono text-sm font-bold text-slate-900 focus:border-[#E2498A] focus:bg-white focus:outline-none"
+                  className="w-full min-h-[44px] px-3 rounded-xl border border-slate-200 bg-slate-50 font-mono text-sm font-bold text-slate-900 focus:border-[#E2498A] focus:bg-white focus:outline-none"
                 />
               </div>
 
               {adminAuthError && (
                 <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-1.5 animate-shake">
-                  <span>⚠️</span>
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" aria-hidden="true" />
                   <span>{adminAuthError}</span>
                 </div>
               )}
@@ -954,13 +1005,13 @@ export const PlatformNavbar: React.FC<PlatformNavbarProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAdminAuthModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-400"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-bold text-xs shadow-xs cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-bold text-xs shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400"
                 >
                   Verificar &amp; Entrar
                 </button>

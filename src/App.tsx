@@ -11,7 +11,8 @@ import { ArqueoCiegoModal } from './components/pms/ArqueoCiegoModal';
 import { ModalAperturaTurno } from './components/pms/ModalAperturaTurno';
 import { ShiftNotificationPill } from './components/pms/ShiftNotificationPill';
 import { SupervisorMobileView, SupervisorMobileTab } from './components/pms/SupervisorMobileView';
-import { CheckCircle2, AlertTriangle, Info, Monitor, Smartphone } from 'lucide-react';
+import { PatioMatrix2D } from './components/common/PatioMatrix2D';
+import { CheckCircle2, AlertTriangle, Info, Monitor, Smartphone, Map } from 'lucide-react';
 import { AppScreen, UserRole, VehicleType, PaymentMethod } from './types';
 import { getScreenFromPath, getPathFromScreen, APP_ROUTES } from './utils/routes';
 import { PatioTestSimulator } from './components/common/PatioTestSimulator';
@@ -43,6 +44,7 @@ function MainAppContent() {
     processPayment,
     registerCashMovement,
     performBlindClose,
+    moveOrSwapVehicleSlot,
   } = useParking();
 
   // Navigation
@@ -58,7 +60,16 @@ function MainAppContent() {
   const [isArqueoCiegoModalOpen, setIsArqueoCiegoModalOpen] = useState(false);
   const [isAperturaTurnoModalOpen, setIsAperturaTurnoModalOpen] = useState(false);
   const [posInitialSubtab, setPosInitialSubtab] = useState<'entry' | 'exit' | 'history'>('entry');
-  const [mobileSupervisorTab, setMobileSupervisorTab] = useState<SupervisorMobileTab>('supervision');
+  const [mobileSupervisorTab, setMobileSupervisorTab] = useState<SupervisorMobileTab>(() => {
+    if (typeof window !== 'undefined') {
+      const initial = getScreenFromPath(window.location.pathname);
+      if (initial === 'map' || initial === 'operacion_layout') return 'patio';
+      if (initial === 'pos' || initial === 'operacion_ingreso' || initial === 'operacion_salida') return 'flujo';
+      if (initial === 'reports' || initial === 'reportes_dashboard' || initial === 'reportes_auditoria') return 'reportes';
+      if (initial === 'settings' || initial === 'config_tarifas' || initial === 'config_sistema' || initial === 'reportes_database') return 'ajustes';
+    }
+    return 'supervision';
+  });
 
   // Ticket Preview Modal state
   const [ticketPreviewData, setTicketPreviewData] = useState<TicketPreviewData | null>(null);
@@ -561,7 +572,7 @@ function MainAppContent() {
       )}
 
       {/* Main Workspace: Full-width viewport below top navbar */}
-      <main className="flex-1 overflow-y-auto relative z-10 pb-16 md:pb-0">
+      <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto relative z-10 pb-28 md:pb-0 focus:outline-none">
         <Suspense fallback={<ViewLoadingSkeleton />}>
           {/* 0. Portal de Acceso / Landing Wireframe */}
           {effectiveScreen === 'landing' && (
@@ -631,15 +642,59 @@ function MainAppContent() {
               />
             )}
 
-            {/* 3. Plano de Slots & Analítica Global (Desktop) */}
+            {/* 3. Plano de Slots & Analítica Global (Desktop) vs Matriz 2D Ergonómica en Móvil */}
             {!shouldRenderSupervisorMobile && isLoggedIn && (effectiveScreen === 'map' || effectiveScreen === 'operacion_layout') && (
-              <AnalyticsView
-                onShowToast={(msg, type) => showToast(msg, type)}
-                onNavigateToCheckout={(plate) => {
-                  setPosInitialSubtab('exit');
-                  handleNavigate('pos');
-                }}
-              />
+              isMobileMode ? (
+                <div className="p-3 sm:p-4 max-w-xl mx-auto space-y-4 animate-fade-in font-sans">
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-[#2D2D44] border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xs font-extrabold text-[#1E1E2F] dark:text-white flex items-center gap-1.5 font-mono uppercase">
+                        <Map className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
+                        <span>Patio 2D Serrano 447</span>
+                      </h2>
+                      <span className="text-[10px] text-slate-500 dark:text-gray-400">
+                        Sector A (01–15 Techado) · Sector B (16–30 General)
+                      </span>
+                    </div>
+                    <span className="text-xs font-mono font-black text-[#E2498A]">
+                      {activeVehicles.length}/30 Ocupados
+                    </span>
+                  </div>
+
+                  <div className="bg-white dark:bg-[#2D2D44] p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <PatioMatrix2D
+                      activeVehicles={activeVehicles}
+                      mode="mobile"
+                      isDraggable={true}
+                      onMoveOrSwapSlot={(source, target) => {
+                        const success = moveOrSwapVehicleSlot(source, target);
+                        if (success) {
+                          showToast(`Vehículo reubicado exitosamente al cupo ${target}`, 'success');
+                        } else {
+                          showToast('No se pudo reubicar el vehículo', 'error');
+                        }
+                      }}
+                      onSelectSlot={(_slotCode, vehicle) => {
+                        if (vehicle) {
+                          setPosInitialSubtab('exit');
+                          handleNavigate('pos');
+                        } else {
+                          setPosInitialSubtab('entry');
+                          handleNavigate('pos');
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <AnalyticsView
+                  onShowToast={(msg, type) => showToast(msg, type)}
+                  onNavigateToCheckout={(plate) => {
+                    setPosInitialSubtab('exit');
+                    handleNavigate('pos');
+                  }}
+                />
+              )
             )}
 
             {/* 4. Reportes & Auditoría (Restringido para Administrador / Supervisor en Desktop) */}

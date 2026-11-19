@@ -26,6 +26,11 @@ import {
   Banknote,
   Send,
   Lock,
+  HardHat,
+  Eye,
+  Map,
+  BarChart3,
+  BookOpen,
 } from 'lucide-react';
 
 export type SupervisorMobileTab = 'supervision' | 'patio' | 'flujo' | 'reportes' | 'ajustes';
@@ -255,7 +260,7 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
       <div className="bg-[#2D2D44] border-b border-slate-700/80 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-[#E2498A] flex items-center justify-center text-white font-black text-xs shadow-xs">
-            👁️
+            <Eye className="w-4 h-4 text-white" aria-hidden="true" />
           </div>
           <div>
             <h2 className="font-extrabold text-white text-xs leading-none">
@@ -274,8 +279,9 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
               {shiftDuration}
             </span>
           ) : (
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-black bg-amber-950 text-amber-300 border border-amber-800">
-              🔒 Turno Cerrado
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-black bg-amber-950 text-amber-300 border border-amber-800">
+              <Lock className="w-3 h-3 text-amber-400" aria-hidden="true" />
+              Turno Cerrado
             </span>
           )}
         </div>
@@ -294,7 +300,7 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
             <div className="p-3.5 rounded-2xl bg-[#2D2D44] border border-slate-700 shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#1E1E2F] border border-slate-700 flex items-center justify-center text-base">
-                  👮
+                  <HardHat className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold text-gray-400 block font-mono">
@@ -365,7 +371,8 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
                 <div className="mt-1 pt-1 border-t border-slate-700/60 text-[10px]">
                   {overstayVehicles.length > 0 ? (
                     <span className="text-rose-400 font-bold flex items-center gap-1">
-                      <span>⚠️</span> {overstayVehicles.length} con sobreestadía (&gt;2h)
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-400 inline shrink-0" aria-hidden="true" />
+                      {overstayVehicles.length} con sobreestadía (&gt;2h)
                     </span>
                   ) : (
                     <span className="text-emerald-400 font-bold">✓ Sin sobreestadía</span>
@@ -480,7 +487,7 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setActiveApprovalToReview(appr)}
-                          className="px-3 py-1 rounded-lg bg-[#E2498A] hover:bg-[#C83472] text-white font-bold text-xs shadow-xs active:scale-95 cursor-pointer"
+                          className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-bold text-xs shadow-xs active:scale-95 cursor-pointer flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-pink-400"
                         >
                           Autorizar con PIN
                         </button>
@@ -496,10 +503,10 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('clients')}
-                className="p-3.5 rounded-2xl bg-[#2D2D44] hover:bg-slate-700 border border-slate-700 text-left transition active:scale-98 cursor-pointer space-y-1"
+                className="min-h-[64px] p-3.5 rounded-2xl bg-[#2D2D44] hover:bg-slate-700 border border-slate-700 text-left transition active:scale-98 cursor-pointer space-y-1 focus:outline-none focus:ring-2 focus:ring-pink-400"
               >
                 <div className="w-8 h-8 rounded-xl bg-pink-950 text-pink-300 flex items-center justify-center text-sm font-bold">
-                  🏢
+                  <Building2 className="w-4 h-4 text-pink-300" aria-hidden="true" />
                 </div>
                 <div className="font-extrabold text-xs text-white">Convenios &amp; Flotas</div>
                 <div className="text-[10px] text-gray-400">{agreements.length} contratos activos</div>
@@ -508,10 +515,10 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('support')}
-                className="p-3.5 rounded-2xl bg-[#2D2D44] hover:bg-slate-700 border border-slate-700 text-left transition active:scale-98 cursor-pointer space-y-1"
+                className="min-h-[64px] p-3.5 rounded-2xl bg-[#2D2D44] hover:bg-slate-700 border border-slate-700 text-left transition active:scale-98 cursor-pointer space-y-1 focus:outline-none focus:ring-2 focus:ring-pink-400"
               >
                 <div className="w-8 h-8 rounded-xl bg-blue-950 text-blue-300 flex items-center justify-center text-sm font-bold">
-                  📘
+                  <BookOpen className="w-4 h-4 text-blue-300" aria-hidden="true" />
                 </div>
                 <div className="font-extrabold text-xs text-white">SOPs &amp; Ayuda</div>
                 <div className="text-[10px] text-gray-400">Manuales garita Serrano</div>
@@ -528,7 +535,8 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
             <div className="p-3.5 rounded-2xl bg-[#2D2D44] border border-slate-700 shadow-sm flex items-center justify-between">
               <div>
                 <h3 className="font-extrabold text-xs text-white flex items-center gap-1.5 font-mono uppercase">
-                  <span>🗺️ Patio 2D · Serrano 447</span>
+                  <Map className="w-4 h-4 text-[#E2498A]" aria-hidden="true" />
+                  <span>Patio 2D · Serrano 447</span>
                 </h3>
                 <span className="text-[10px] text-gray-400">
                   Sector A (01–15 Techado) · Sector B (16–30 General)
@@ -564,13 +572,17 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
             
             {/* Buscador Rápido de Patente */}
             <div className="relative">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
+              <label htmlFor="supervisor-flow-search" className="sr-only">
+                Buscar movimientos por patente o cupo
+              </label>
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" aria-hidden="true" />
               <input
+                id="supervisor-flow-search"
                 type="text"
                 value={flowSearch}
                 onChange={(e) => setFlowSearch(e.target.value)}
                 placeholder="Buscar por patente o cupo (ej. BBCL10, A-04)..."
-                className="w-full h-10 pl-10 pr-4 rounded-xl bg-[#2D2D44] border border-slate-700 text-xs font-mono text-white placeholder-gray-400 focus:outline-none focus:border-[#E2498A]"
+                className="w-full min-h-[44px] pl-10 pr-4 rounded-xl bg-[#2D2D44] border border-slate-700 text-xs font-mono text-white placeholder-gray-400 focus:outline-none focus:border-[#E2498A]"
               />
             </div>
 
@@ -597,13 +609,14 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
             </div>
 
             {/* Filtros de Tipo de Movimiento */}
-            <div className="flex bg-[#2D2D44] p-1 rounded-xl border border-slate-700 gap-1 text-[11px] font-bold">
+            <div className="flex bg-[#2D2D44] p-1 rounded-xl border border-slate-700 gap-1 text-[11px] font-bold" role="group" aria-label="Filtro de movimientos">
               {(['TODOS', 'ENTRADAS', 'SALIDAS'] as const).map((f) => (
                 <button
                   key={f}
                   type="button"
                   onClick={() => setFlowFilter(f)}
-                  className={`flex-1 py-1.5 rounded-lg transition active:scale-95 cursor-pointer ${
+                  aria-pressed={flowFilter === f}
+                  className={`flex-1 min-h-[44px] flex items-center justify-center py-2 px-3 rounded-lg transition active:scale-95 cursor-pointer font-bold ${
                     flowFilter === f ? 'bg-[#E2498A] text-white shadow-xs' : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -704,9 +717,9 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('reports')}
-                className="w-full min-h-[46px] py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-98 cursor-pointer"
+                className="w-full min-h-[48px] py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-98 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
               >
-                <span>📊</span>
+                <BarChart3 className="w-4 h-4" aria-hidden="true" />
                 <span>Abrir Módulo Completo de Reportes Z &amp; Auditoría</span>
               </button>
             </div>
@@ -749,9 +762,9 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('settings')}
-                className="w-full min-h-[46px] py-2.5 px-4 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-98 cursor-pointer"
+                className="w-full min-h-[48px] py-2.5 px-4 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-98 cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400"
               >
-                <span>⚙️</span>
+                <Settings className="w-4 h-4" aria-hidden="true" />
                 <span>Gestionar Configuración Completa</span>
               </button>
             </div>
@@ -773,9 +786,10 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
               <button
                 type="button"
                 onClick={() => setInspectedVehicle(null)}
-                className="w-7 h-7 rounded-full bg-slate-700 text-gray-300 hover:text-white flex items-center justify-center font-bold text-xs"
+                className="w-10 h-10 min-h-[44px] min-w-[44px] rounded-full bg-slate-700 text-gray-300 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400"
+                aria-label="Cerrar ficha de inspección"
               >
-                ✕
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -803,7 +817,7 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
             <button
               type="button"
               onClick={() => setInspectedVehicle(null)}
-              className="w-full py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs cursor-pointer"
+              className="w-full min-h-[48px] py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400 flex items-center justify-center"
             >
               Cerrar Ficha
             </button>
@@ -817,7 +831,7 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
           <div className="bg-[#2D2D44] border border-slate-700 rounded-3xl p-5 max-w-sm w-full space-y-4 text-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-700 pb-3">
               <div className="flex items-center gap-2">
-                <span className="text-lg">🛡️</span>
+                <ShieldAlert className="w-5 h-5 text-pink-400 shrink-0" aria-hidden="true" />
                 <h4 className="font-black text-sm text-white">Autorización de Excepción</h4>
               </div>
               <button
@@ -827,9 +841,10 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
                   setSupervisorPinInput('');
                   setPinError(null);
                 }}
-                className="w-7 h-7 rounded-full bg-slate-700 text-gray-300 hover:text-white flex items-center justify-center font-bold text-xs"
+                className="w-10 h-10 min-h-[44px] min-w-[44px] rounded-full bg-slate-700 text-gray-300 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400"
+                aria-label="Cerrar diálogo de autorización"
               >
-                ✕
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -845,10 +860,11 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
               className="space-y-3"
             >
               <div>
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+                <label htmlFor="supervisor-modal-pin" className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">
                   Ingrese PIN de Supervisor (ej. 2026)
                 </label>
                 <input
+                  id="supervisor-modal-pin"
                   type="password"
                   autoFocus
                   value={supervisorPinInput}
@@ -857,13 +873,14 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
                     if (pinError) setPinError(null);
                   }}
                   placeholder="PIN maestro..."
-                  className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-[#1E1E2F] font-mono text-sm font-bold text-white focus:border-[#E2498A] focus:outline-none"
+                  className="w-full min-h-[44px] px-3 rounded-xl border border-slate-700 bg-[#1E1E2F] font-mono text-sm font-bold text-white focus:border-[#E2498A] focus:outline-none"
                 />
               </div>
 
               {pinError && (
-                <div className="p-2.5 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-semibold">
-                  ⚠️ {pinError}
+                <div className="p-2.5 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-semibold flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 inline" aria-hidden="true" />
+                  <span>{pinError}</span>
                 </div>
               )}
 
@@ -875,13 +892,13 @@ export const SupervisorMobileView: React.FC<SupervisorMobileViewProps> = ({
                     setSupervisorPinInput('');
                     setPinError(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-bold text-xs shadow-xs"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-bold text-xs shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400"
                 >
                   Autorizar
                 </button>

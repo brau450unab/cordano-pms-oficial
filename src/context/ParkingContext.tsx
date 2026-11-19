@@ -265,6 +265,12 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const [user, setUser] = useState<User>(() => {
+    if (typeof window !== 'undefined') {
+      const savedRole = localStorage.getItem('pms_matic_user_role');
+      if (savedRole === 'operador') return INITIAL_OPERATOR;
+      if (savedRole === 'supervisor') return INITIAL_SUPERVISOR;
+      if (savedRole === 'administrador') return INITIAL_ADMIN;
+    }
     return INITIAL_ADMIN;
   });
   const [isLoggedIn, setIsLoggedInState] = useState<boolean>(() => {
