@@ -17,6 +17,7 @@ import {
   AuditLog,
   VehicleType,
   PaymentMethod,
+  PaymentSplit,
   SlotStatus,
   ChileanCashBreakdown,
   CashMovement,
@@ -45,6 +46,7 @@ import { calculateStayFeeLey20967 } from '../services/tariffEngine';
 import { emitFiscalDte, generateDailySalesReportRVD, DailySalesReportRVD } from '../services/fiscal/siiBillingService';
 import { cordanoOfflineDB } from '../services/db/offlineStorage';
 import { EscPosDriver } from '../services/hardware/escPosDriver';
+import { generateShiftCryptographicSeal } from '../utils/cryptoSha256';
 
 export const computeAgreementStatus = (validUntil: string): 'al_dia' | 'por_vencer' | 'vencido' => {
   const now = new Date();
@@ -166,10 +168,17 @@ interface ParkingContextType {
   assignSlotToTicket: (ticketId: string, slotCode: string) => void;
   moveOrSwapVehicleSlot: (sourceSlotNum: number, targetSlotNum: number) => boolean;
   calculateFee: (ticket: Ticket, customExitTime?: Date) => StayCalculation;
+  validateAntiPassback: (plate: string) => {
+    isBlocked: boolean;
+    activeTicket?: Ticket;
+    conflictingSlot?: ParkingSlot;
+    message?: string;
+  };
   processPayment: (params: {
     ticketId: string;
     paymentMethod: PaymentMethod;
     paidAmount: number;
+    paymentSplits?: PaymentSplit[];
     discountAmount?: number;
     discountReason?: string;
     isLostTicket?: boolean;
@@ -180,6 +189,16 @@ interface ParkingContextType {
   cancelTicket: (ticketId: string, reason: string, adminPass: string) => boolean;
   updateSlotStatus: (slotCode: string, newStatus: SlotStatus) => void;
   updateTariffConfig: (newConfig: TariffConfig, reason?: string) => void;
+  currentCashInDrawer: number;
+  getCurrentCashInDrawer: () => number;
+  registerCashDrop: (params: {
+    amount: number;
+    reason: string;
+    supervisorPin: string;
+    supervisorName?: string;
+    destination?: string;
+    requesterName?: string;
+  }) => CashMovement;
   registerCashMovement: (
     type: 'INGRESO_MANUAL' | 'RETIRO_SANGRIA' | 'GASTO_MENOR',
     amount: number,
@@ -595,8 +614,9 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const setUserRole = (role: 'operador' | 'supervisor' | 'administrador') => {
     localStorage.setItem('pms_matic_user_role', role);
+    const baseUser = role === 'operador' ? INITIAL_OPERATOR : role === 'supervisor' ? INITIAL_SUPERVISOR : INITIAL_ADMIN;
     setUser({
-      ...INITIAL_ADMIN,
+      ...baseUser,
       role,
       permissions: ROLE_PERMISSIONS[role],
     });
@@ -604,19 +624,25 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const hasPermission = (permission: keyof UserPermissions): boolean => {
     if (!user) return false;
+    // Incompatibilidad de Caja: Administrador y Supervisor tienen estrictamente VEDADA la operación de POS y caja
+    if (permission === 'canOperatePos' || permission === 'canOpenCloseShift') {
+      return user.role === 'operador';
+    }
+    // Solo Administrador puede configurar tarifas y parámetros del sistema
+    if (permission === 'canConfigureSystem') {
+      return user.role === 'administrador';
+    }
     if (user.permissions && typeof user.permissions[permission] === 'boolean') {
       return user.permissions[permission];
     }
     if (user.role === 'administrador') return true;
-    if (permission === 'canOperatePos' || permission === 'canOpenCloseShift') {
-      return user.role === 'operador';
-    }
     return false;
   };
 
   // Estado de turno y titularidad exclusiva del operador que lo abrió
+  // Incompatibilidad de Caja: Los roles Administrador y Supervisor NUNCA pueden ser titulares (isShiftOwner) de caja
   const isShiftOpen = currentShift?.status === 'abierto';
-  const isShiftOwner = isShiftOpen && Boolean(
+  const isShiftOwner = isShiftOpen && user?.role === 'operador' && Boolean(
     (user?.id && currentShift?.operatorId === user.id) ||
     (user?.name && currentShift?.operatorName === user.name)
   );
@@ -833,6 +859,38 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
     );
   };
 
+  const validateAntiPassback = (plate: string): {
+    isBlocked: boolean;
+    activeTicket?: Ticket;
+    conflictingSlot?: ParkingSlot;
+    message?: string;
+  } => {
+    const clean = plate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!clean) return { isBlocked: false };
+
+    const activeTicket = tickets.find(
+      (t) => t.status === 'activo' && t.plateNumber.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === clean
+    );
+    const conflictingSlot = slots.find(
+      (s) => s.status === 'ocupado' && s.plateNumber && s.plateNumber.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === clean
+    );
+
+    if (activeTicket || conflictingSlot) {
+      const ticketRef = activeTicket?.ticketCode || activeTicket?.id || 'Activo';
+      const slotRef = (activeTicket?.slotCode && activeTicket.slotCode !== 'SIN_ASIGNAR')
+        ? activeTicket.slotCode
+        : (conflictingSlot?.code || 'Patio');
+      return {
+        isBlocked: true,
+        activeTicket,
+        conflictingSlot,
+        message: `[Anti-Passback] La patente ${plate.toUpperCase()} ya cuenta con ticket activo (${ticketRef}, Plaza ${slotRef}).`,
+      };
+    }
+
+    return { isBlocked: false };
+  };
+
   const registerEntry = (
     paramsOrPlate:
       | {
@@ -890,23 +948,56 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
 
     const formattedPlate = plateNumber.trim().toUpperCase();
+    const cleanPlate = formattedPlate.replace(/[^A-Z0-9]/g, '');
+
+    if (!cleanPlate) {
+      throw new Error('La patente ingresada no es válida.');
+    }
 
     // 1. Validar que el turno esté abierto obligatoriamente
     if (!currentShift || currentShift.status !== 'abierto') {
       throw new Error('Punto de Venta Bloqueado: No es posible ingresar vehículos sin un turno iniciado. Es obligatorio aperturar el turno con el fondo de caja.');
     }
 
-    // 2. Dominio exclusivo: solo el titular que abrió el turno puede ingresar vehículos
+    // 2. Incompatibilidad de Caja: Administrador y Supervisor tienen VEDADA la operación de garita POS
+    if (user.role !== 'operador' || !hasPermission('canOperatePos')) {
+      throw new Error('Incompatibilidad de Caja: Administradores y Supervisores tienen estrictamente VEDADA la operación de caja y el registro de vehículos en POS (Solo modo Visor / Auditoría).');
+    }
+
+    // 3. Dominio exclusivo: solo el titular que abrió el turno puede ingresar vehículos
     if (currentShift.operatorId && user.id !== currentShift.operatorId && user.name !== currentShift.operatorName) {
       throw new Error(`Acceso Restringido: El turno actual pertenece a ${currentShift.operatorName}. Solo el titular del turno puede registrar vehículos. Los demás usuarios operan en modo solo visualizador.`);
     }
 
-    // Check anti-passback: duplicate active plate
+    // 3. Validación estricta Anti-Passback (Estándar SKIDATA / Odoo POS):
+    // Bloquear cualquier intento de Check-in para una patente que ya figure con un ticket activo en el patio de Serrano 447
     const existingActive = tickets.find(
-      (t) => t.plateNumber === formattedPlate && t.status === 'activo'
+      (t) => t.status === 'activo' && t.plateNumber.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === cleanPlate
     );
-    if (existingActive) {
-      throw new Error(`[Anti-Passback] La patente ${formattedPlate} ya registra una entrada activa en el ticket ${existingActive.ticketCode}`);
+    const existingOccupiedSlot = slots.find(
+      (s) => s.status === 'ocupado' && s.plateNumber && s.plateNumber.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === cleanPlate
+    );
+
+    if (existingActive || existingOccupiedSlot) {
+      const ticketRef = existingActive?.ticketCode || existingActive?.id || 'Activo';
+      const slotRef = (existingActive?.slotCode && existingActive.slotCode !== 'SIN_ASIGNAR')
+        ? existingActive.slotCode
+        : (existingOccupiedSlot?.code || 'Patio Serrano 447');
+      const entryTimeRef = existingActive
+        ? new Date(existingActive.entryTime).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+        : 'reciente';
+
+      // Registro en bitácora de auditoría inmutable
+      addAuditLog(
+        'VIOLACION_ANTI_PASSBACK',
+        `[Anti-Passback SKIDATA] Intento de reingreso no autorizado bloqueado para patente ${formattedPlate}. Vehículo ya presente en Ticket ${ticketRef} (Plaza ${slotRef}, Ingreso ${entryTimeRef} hrs).`,
+        'critical',
+        user.name
+      );
+
+      throw new Error(
+        `[Anti-Passback SKIDATA] Acceso Denegado: La patente ${formattedPlate} ya registra una entrada activa en el patio de Serrano 447 (Ticket: ${ticketRef}, Plaza: ${slotRef}, Ingreso: ${entryTimeRef} hrs). Debe registrar su salida antes de generar un nuevo ingreso.`
+      );
     }
 
     const nowIso = new Date().toISOString();
@@ -1146,6 +1237,7 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
     ticketId: string;
     paymentMethod: PaymentMethod;
     paidAmount: number;
+    paymentSplits?: PaymentSplit[];
     discountAmount?: number;
     discountReason?: string;
     isLostTicket?: boolean;
@@ -1157,6 +1249,7 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
       ticketId,
       paymentMethod,
       paidAmount,
+      paymentSplits,
       discountAmount = 0,
       discountReason,
       isLostTicket = false,
@@ -1170,7 +1263,12 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
       throw new Error('Punto de Venta Bloqueado: No es posible procesar cobros ni liquidar salidas sin un turno iniciado.');
     }
 
-    // 2. Dominio exclusivo: solo el titular del turno puede procesar cobros
+    // 2. Incompatibilidad de Caja: Administrador y Supervisor tienen estrictamente VEDADO el cobro en garita POS
+    if (user.role !== 'operador' || !hasPermission('canOperatePos')) {
+      throw new Error('Incompatibilidad de Caja: Administradores y Supervisores tienen estrictamente VEDADO el cobro en garita POS para preservar la imparcialidad del arqueo (Solo Modo Visor).');
+    }
+
+    // 3. Dominio exclusivo: solo el titular del turno puede procesar cobros
     if (currentShift.operatorId && user.id !== currentShift.operatorId && user.name !== currentShift.operatorName) {
       throw new Error(`Acceso Restringido: El turno actual pertenece a ${currentShift.operatorName}. Solo el titular del turno puede liquidar cobros. Los demás usuarios operan en modo solo visualizador.`);
     }
@@ -1185,10 +1283,40 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     // Conforme a la Ley 20.967, ante pérdida de ticket el cobro se realiza estrictamente por tiempo efectivo rastreado por patente, sin multas punitivas fijas.
     const finalTotal = Math.max(0, computedAmount - discountAmount);
-    const changeAmount = Math.max(0, paidAmount - finalTotal);
 
-    if (paidAmount < finalTotal) {
-      throw new Error(`El monto pagado ($${paidAmount.toLocaleString('es-CL')}) es inferior al total a cobrar ($${finalTotal.toLocaleString('es-CL')})`);
+    // Soporte para métodos de pago mixtos / desglose detallado (Odoo POS / SAP Business One)
+    let effectivePaymentMethod: PaymentMethod = paymentMethod;
+    let validatedSplits: PaymentSplit[] | undefined = paymentSplits;
+
+    if (paymentSplits && paymentSplits.length > 0) {
+      paymentSplits.forEach((split) => {
+        if (split.amount <= 0) {
+          throw new Error(`El monto asignado al medio de pago ${split.method} debe ser mayor a $0 CLP.`);
+        }
+      });
+
+      const totalSplitPaid = paymentSplits.reduce((acc, s) => acc + s.amount, 0);
+      if (totalSplitPaid < finalTotal) {
+        throw new Error(
+          `Desglose de pago insuficiente: La suma de los métodos de pago ingresados ($${totalSplitPaid.toLocaleString('es-CL')}) no cubre el total liquidado ($${finalTotal.toLocaleString('es-CL')}).`
+        );
+      }
+
+      if (paymentSplits.length > 1) {
+        effectivePaymentMethod = 'mixto';
+      } else {
+        effectivePaymentMethod = paymentSplits[0].method;
+      }
+    }
+
+    const effectivePaidAmount = paymentSplits && paymentSplits.length > 0
+      ? paymentSplits.reduce((acc, s) => acc + s.amount, 0)
+      : paidAmount;
+
+    const changeAmount = Math.max(0, effectivePaidAmount - finalTotal);
+
+    if (effectivePaidAmount < finalTotal) {
+      throw new Error(`El monto pagado ($${effectivePaidAmount.toLocaleString('es-CL')}) es inferior al total a cobrar ($${finalTotal.toLocaleString('es-CL')})`);
     }
 
     // Emisión obligatoria de Boleta Electrónica SII (Tipo 39 Afecta o 41 Exenta) con Timbre Electrónico DTE (<TED>)
@@ -1212,9 +1340,10 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
       isLostTicket,
       isLostTicketResolvedByPlate: isLostTicket,
       totalAmount: finalTotal,
-      paidAmount,
+      paidAmount: effectivePaidAmount,
       changeAmount,
-      paymentMethod,
+      paymentMethod: effectivePaymentMethod,
+      paymentSplits: validatedSplits,
       voucherNumber,
       invoiceFolio: fiscalDoc.folio,
       dteFolio: fiscalDoc.folio,
@@ -1321,6 +1450,11 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const updateTariffConfig = (newConfig: TariffConfig, reason?: string) => {
+    // RBAC: Solo rol Administrador con canConfigureSystem puede alterar tarifas o parámetros
+    if (user.role === 'operador' || !hasPermission('canConfigureSystem')) {
+      throw new Error('Acceso Denegado: Los operadores no tienen permisos para modificar tarifas horarias ni alterar parámetros del sistema.');
+    }
+
     const nowIso = new Date().toISOString();
     const newVersionNumber = tariffVersions.length + 1;
     const newVersionId = `tar-v${newVersionNumber}-${Date.now()}`;
@@ -1364,6 +1498,123 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
     );
   };
 
+  const getCurrentCashInDrawer = (): number => {
+    if (!currentShift) return 0;
+    const initial = currentShift.initialCash || 0;
+
+    // Sum cash from paid tickets during current shift (handling paymentSplits as well)
+    const paidTickets = tickets.filter((t) => t.status === 'pagado');
+    const cashFromTickets = paidTickets.reduce((sum, t) => {
+      if (t.paymentSplits && t.paymentSplits.length > 0) {
+        const cashSplit = t.paymentSplits
+          .filter((s) => s.method === 'efectivo')
+          .reduce((sSum, s) => sSum + s.amount, 0);
+        return sum + cashSplit;
+      }
+      return sum + (t.paymentMethod === 'efectivo' ? (t.totalAmount || 0) : 0);
+    }, 0);
+
+    // Sum manual cash movements
+    const movements = currentShift.cashMovements || [];
+    const manualIngresos = movements
+      .filter((m) => m.type === 'INGRESO_MANUAL')
+      .reduce((sum, m) => sum + m.amount, 0);
+    const manualSangrias = movements
+      .filter((m) => m.type === 'RETIRO_SANGRIA' || m.type === 'GASTO_MENOR')
+      .reduce((sum, m) => sum + m.amount, 0);
+
+    return Math.max(0, initial + cashFromTickets + manualIngresos - manualSangrias);
+  };
+
+  const currentCashInDrawer = getCurrentCashInDrawer();
+
+  const registerCashDrop = (params: {
+    amount: number;
+    reason: string;
+    supervisorPin: string;
+    supervisorName?: string;
+    destination?: string;
+    requesterName?: string;
+  }): CashMovement => {
+    const {
+      amount,
+      reason,
+      supervisorPin,
+      supervisorName,
+      destination = 'Administración Central / Bóveda Cordano',
+      requesterName,
+    } = params;
+
+    if (amount <= 0) {
+      throw new Error('El monto de la sangría debe ser superior a $0 CLP');
+    }
+
+    if (!currentShift || currentShift.status !== 'abierto') {
+      throw new Error('Caja Bloqueada: No se pueden realizar sangrías de efectivo sin un turno activo.');
+    }
+
+    if (currentShift.operatorId && user.id !== currentShift.operatorId && user.name !== currentShift.operatorName) {
+      throw new Error(`Acceso Restringido: Solo el titular del turno (${currentShift.operatorName}) puede autorizar retiros de efectivo.`);
+    }
+
+    const availableCash = getCurrentCashInDrawer();
+    if (amount > availableCash) {
+      throw new Error(
+        `[Cash Drop] Fondos Insuficientes: La sangría solicitada ($${amount.toLocaleString('es-CL')} CLP) excede el efectivo físico disponible en gaveta ($${availableCash.toLocaleString('es-CL')} CLP).`
+      );
+    }
+
+    const cleanPin = supervisorPin.trim();
+    const isValidPin = cleanPin === '1234' || cleanPin === '2026' || cleanPin === 'admin123';
+    if (!isValidPin) {
+      throw new Error('PIN de Supervisor inválido para autorizar la sangría de efectivo.');
+    }
+
+    const cashBefore = availableCash;
+    const cashAfter = availableCash - amount;
+    const voucherFolio = `SANG-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const newMovement: CashMovement = {
+      id: `mov-${Date.now()}`,
+      shiftId: currentShift.id,
+      timestamp: new Date().toISOString(),
+      type: 'RETIRO_SANGRIA',
+      amount,
+      reason: reason || 'Retiro parcial de efectivo (Cash Drop) a administración por seguridad',
+      operatorId: user.id,
+      operatorName: user.name,
+      requesterName: requesterName || user.name,
+      authorizerName: supervisorName || 'Supervisor Autorizante',
+      authorizedBySupervisor: `Supervisor (${supervisorName || 'PIN Validado'})`,
+      supervisorTotpPin: cleanPin,
+      voucherFolio,
+      destination,
+      cashInDrawerBefore: cashBefore,
+      cashInDrawerAfter: cashAfter,
+      isCashDrop: true,
+    };
+
+    setCurrentShift((prev) => ({
+      ...prev,
+      cashMovements: [...(prev.cashMovements || []), newMovement],
+    }));
+
+    addAuditLog(
+      'SANGRIA_EFECTIVO',
+      `[Cash Drop / Sangría] Retiro de $${amount.toLocaleString('es-CL')} CLP desde gaveta hacia ${destination}. Efectivo antes: $${cashBefore.toLocaleString('es-CL')}, después: $${cashAfter.toLocaleString('es-CL')}. Folio: ${voucherFolio}. Motivo: ${reason}`,
+      'warning',
+      supervisorName || 'Supervisor'
+    );
+
+    persistToFirestore(COLLECTIONS.CASH_MOVEMENTS, newMovement.id, newMovement);
+    cordanoOfflineDB.saveShift({
+      ...currentShift,
+      cashMovements: [...(currentShift.cashMovements || []), newMovement],
+    }).catch(console.warn);
+
+    return newMovement;
+  };
+
   const registerCashMovement = (
     type: 'INGRESO_MANUAL' | 'RETIRO_SANGRIA' | 'GASTO_MENOR',
     amount: number,
@@ -1384,6 +1635,17 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
       throw new Error(`Acceso Restringido: Solo el titular del turno (${currentShift.operatorName}) puede registrar movimientos de efectivo en gaveta.`);
     }
 
+    const availableCash = getCurrentCashInDrawer();
+    if ((type === 'RETIRO_SANGRIA' || type === 'GASTO_MENOR') && amount > availableCash) {
+      throw new Error(
+        `Fondos Insuficientes en Gaveta: El egreso solicitado ($${amount.toLocaleString('es-CL')} CLP) supera el efectivo disponible en caja ($${availableCash.toLocaleString('es-CL')} CLP).`
+      );
+    }
+
+    const cashBefore = availableCash;
+    const cashAfter = type === 'INGRESO_MANUAL' ? cashBefore + amount : cashBefore - amount;
+    const isSangria = type === 'RETIRO_SANGRIA';
+
     const newMovement: CashMovement = {
       id: `mov-${Date.now()}`,
       shiftId: currentShift.id,
@@ -1397,7 +1659,11 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
       authorizerName: authorizerName || (supervisorPin ? 'Supervisor' : undefined),
       authorizedBySupervisor: supervisorPin ? `Supervisor (PIN ${supervisorPin})` : undefined,
       supervisorTotpPin: supervisorPin,
-      voucherFolio: `VOUCHER-${Math.floor(1000 + Math.random() * 9000)}`,
+      voucherFolio: isSangria ? `SANG-${Math.floor(10000 + Math.random() * 90000)}` : `VOUCHER-${Math.floor(1000 + Math.random() * 9000)}`,
+      destination: isSangria ? 'Administración Central / Bóveda Cordano' : undefined,
+      cashInDrawerBefore: cashBefore,
+      cashInDrawerAfter: cashAfter,
+      isCashDrop: isSangria,
     };
 
     setCurrentShift((prev) => ({
@@ -1409,7 +1675,7 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
       type === 'INGRESO_MANUAL' ? 'INGRESO' : type === 'GASTO_MENOR' ? 'GASTO MENOR' : 'SANGRÍA/RETIRO';
 
     addAuditLog(
-      type === 'INGRESO_MANUAL' ? 'MOVIMIENTO_CAJA_INGRESO' : 'MOVIMIENTO_CAJA_RETIRO',
+      isSangria ? 'SANGRIA_EFECTIVO' : (type === 'INGRESO_MANUAL' ? 'MOVIMIENTO_CAJA_INGRESO' : 'MOVIMIENTO_CAJA_RETIRO'),
       `Movimiento manual [${typeLabel}] por $${amount.toLocaleString('es-CL')} CLP. Solicitó: ${requesterName || user.name}. Motivo: ${reason}`,
       type === 'RETIRO_SANGRIA' || type === 'GASTO_MENOR' ? 'warning' : 'info',
       authorizerName || (supervisorPin ? 'Supervisor' : user.name)
@@ -1483,18 +1749,44 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
     supervisorName?: string
   ): Shift => {
     if (!currentShift || currentShift.status !== 'abierto') {
-      throw new Error('No hay un turno abierto para cerrar.');
+      throw new Error('El turno ya se encuentra cerrado y sellado con SHA-256 de forma inmutable, o no existe turno abierto para cerrar.');
     }
 
-    if (currentShift.operatorId && user.id !== currentShift.operatorId && user.name !== currentShift.operatorName && user.role !== 'administrador') {
+    if (user.role !== 'operador') {
+      throw new Error('Incompatibilidad de Caja: Administradores y Supervisores tienen estrictamente VEDADO realizar el arqueo de caja. El cierre ciego debe ser ejecutado por el operador titular.');
+    }
+
+    if (currentShift.operatorId && user.id !== currentShift.operatorId && user.name !== currentShift.operatorName) {
       throw new Error(`Acceso Restringido: Solo el titular del turno (${currentShift.operatorName}) puede realizar el arqueo y cierre.`);
     }
 
-    // Calculate expected totals from paid tickets in current shift
+    // Calculate expected totals from paid tickets in current shift (accounting for mixed splits)
     const paidTickets = tickets.filter((t) => t.status === 'pagado');
-    const cashTickets = paidTickets
-      .filter((t) => t.paymentMethod === 'efectivo')
-      .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+    let cashTickets = 0;
+    let expectedCard = 0;
+    let expectedTransfer = 0;
+
+    paidTickets.forEach((t) => {
+      if (t.paymentSplits && t.paymentSplits.length > 0) {
+        t.paymentSplits.forEach((split) => {
+          if (split.method === 'efectivo') {
+            cashTickets += split.amount;
+          } else if (split.method === 'tarjeta_debito' || split.method === 'tarjeta_credito') {
+            expectedCard += split.amount;
+          } else if (split.method === 'transferencia') {
+            expectedTransfer += split.amount;
+          }
+        });
+      } else {
+        if (t.paymentMethod === 'efectivo') {
+          cashTickets += (t.totalAmount || 0);
+        } else if (t.paymentMethod === 'tarjeta_debito' || t.paymentMethod === 'tarjeta_credito') {
+          expectedCard += (t.totalAmount || 0);
+        } else if (t.paymentMethod === 'transferencia') {
+          expectedTransfer += (t.totalAmount || 0);
+        }
+      }
+    });
 
     // Sum manual cash movements
     const movements = currentShift.cashMovements || [];
@@ -1505,15 +1797,8 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
       .filter((m) => m.type === 'RETIRO_SANGRIA' || m.type === 'GASTO_MENOR')
       .reduce((sum, m) => sum + m.amount, 0);
 
+    // Cash physically expected in drawer: discounts cash drops/sangrias without altering total revenue
     const expectedCash = (currentShift.initialCash || 0) + cashTickets + manualIngresos - manualSangrias;
-
-    const expectedCard = paidTickets
-      .filter((t) => t.paymentMethod === 'tarjeta_debito' || t.paymentMethod === 'tarjeta_credito')
-      .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
-
-    const expectedTransfer = paidTickets
-      .filter((t) => t.paymentMethod === 'transferencia')
-      .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
 
     const discrepancyCash = declaredCash - expectedCash;
     const totalDeclared = declaredCash + declaredCard + declaredTransfer;
@@ -1525,11 +1810,30 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
     const rvd = generateDailySalesReportRVD(currentShift, paidTickets);
     setDailyRvd(rvd);
 
-    const auditHash = `CPMS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const closeTimestamp = new Date().toISOString();
+
+    // Sello Criptográfico Inmutable SHA-256 oficial
+    const seal = generateShiftCryptographicSeal({
+      id: currentShift.id,
+      startTime: currentShift.startTime,
+      endTime: closeTimestamp,
+      operatorId: user.id,
+      operatorName: user.name,
+      declaredCash,
+      declaredCard,
+      declaredTransfer,
+      expectedCash,
+      expectedCard,
+      expectedTransfer,
+      discrepancyTotal,
+      rvdFolio: rvd.folioRvd,
+      supervisorPin,
+    });
+    const auditHash = seal.formattedSeal;
 
     const closedShift: Shift = {
       ...currentShift,
-      endTime: new Date().toISOString(),
+      endTime: closeTimestamp,
       declaredCash,
       declaredCard,
       declaredTransfer,
@@ -1608,6 +1912,11 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const openNewShift = (initialCash: number = 50000, breakdown?: ChileanCashBreakdown) => {
+    // Incompatibilidad de Caja: Administradores y Supervisores tienen VEDADA la apertura de turnos
+    if (user.role !== 'operador') {
+      throw new Error('Incompatibilidad de Caja: Administradores y Supervisores tienen estrictamente VEDADA la apertura de turnos. Solo usuarios con rol Operador pueden aperturar caja en garita.');
+    }
+
     const validatedInitialCash = initialCash > 0 ? initialCash : 50000;
     const newShift: Shift = {
       id: `SHIFT-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -1713,6 +2022,7 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
         updateAgreement,
         deleteAgreement,
         registerEntry,
+        validateAntiPassback,
         assignSlotToTicket,
         moveOrSwapVehicleSlot,
         calculateFee,
@@ -1720,6 +2030,9 @@ export const ParkingProvider: React.FC<{ children: ReactNode }> = ({ children })
         cancelTicket,
         updateSlotStatus,
         updateTariffConfig,
+        currentCashInDrawer,
+        getCurrentCashInDrawer,
+        registerCashDrop,
         registerCashMovement,
         registerVehicleEscape,
         performBlindClose,

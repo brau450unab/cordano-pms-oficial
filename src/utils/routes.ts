@@ -95,7 +95,7 @@ export const APP_ROUTES: Record<AppScreen, RouteConfig> = {
   operacion_ingreso: {
     screen: 'operacion_ingreso',
     path: '/operacion/ingreso',
-    title: 'Ingreso & Barrera',
+    title: 'Ingreso & Garita',
     category: 'Operación',
     description: 'Registro de patentes, validación Anti-Passback y emisión de ticket',
     isPublic: false,

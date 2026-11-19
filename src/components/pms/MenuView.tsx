@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   Activity,
+  Play,
+  Lock,
 } from 'lucide-react';
 
 interface MenuViewProps {
@@ -345,8 +347,8 @@ export const MenuView: React.FC<MenuViewProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-2.5">
-              <span className="px-3 py-1.5 rounded-full text-xs font-mono font-black bg-amber-950 text-amber-300 border border-amber-800">
-                🔒 TURNO CERRADO
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-black bg-amber-950 text-amber-300 border border-amber-800">
+                <Lock className="w-3.5 h-3.5" /> TURNO CERRADO
               </span>
               <button
                 type="button"
@@ -354,7 +356,7 @@ export const MenuView: React.FC<MenuViewProps> = ({
                 className="hidden sm:flex px-4 py-1.5 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer items-center gap-1.5"
                 title="Iniciar turno formalmente en Garita"
               >
-                <span>🚀</span>
+                <Play className="w-3.5 h-3.5 fill-current" />
                 <span>Iniciar Turno</span>
               </button>
             </div>
@@ -607,7 +609,8 @@ export const MenuView: React.FC<MenuViewProps> = ({
                     onClick={() => onInitiateOpenShift && onInitiateOpenShift()}
                     className="py-3 px-6 rounded-full bg-[#E2498A] hover:bg-[#C83472] text-white font-black text-xs shadow-lg shadow-[#E2498A]/30 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                   >
-                    <span>🚀 Iniciar Turno en Garita</span>
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>Iniciar Turno en Garita</span>
                   </button>
                   <span className="text-xs text-amber-300 font-mono bg-amber-950/60 border border-amber-800 px-3 py-1.5 rounded-xl">
                     ⚠ POS bloqueado: Inicie turno declarando fondo de $50.000 CLP para operar.
@@ -852,7 +855,8 @@ export const MenuView: React.FC<MenuViewProps> = ({
                     }}
                     className="px-4 py-2 rounded-full bg-[#E2498A] hover:bg-[#C83472] text-white text-xs font-bold transition-colors shadow-xs cursor-pointer active:scale-[0.98] flex items-center gap-1.5"
                   >
-                    <span>🚀 Iniciar Turno con Fondo</span>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Iniciar Turno con Fondo</span>
                   </button>
                 )}
               </div>

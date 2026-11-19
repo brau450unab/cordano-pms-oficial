@@ -11,6 +11,7 @@ import { ArqueoCiegoModal } from './components/pms/ArqueoCiegoModal';
 import { ModalAperturaTurno } from './components/pms/ModalAperturaTurno';
 import { ShiftNotificationPill } from './components/pms/ShiftNotificationPill';
 import { SupervisorMobileView, SupervisorMobileTab } from './components/pms/SupervisorMobileView';
+import { CheckCircle2, AlertTriangle, Info, Monitor, Smartphone } from 'lucide-react';
 import { AppScreen, UserRole, VehicleType, PaymentMethod } from './types';
 import { getScreenFromPath, getPathFromScreen, APP_ROUTES } from './utils/routes';
 import { PatioTestSimulator } from './components/common/PatioTestSimulator';
@@ -37,6 +38,7 @@ function MainAppContent() {
     agreements,
     tariffConfig,
     keyboardShortcutsEnabled,
+    currentCashInDrawer,
     registerEntry,
     processPayment,
     registerCashMovement,
@@ -365,32 +367,36 @@ function MainAppContent() {
           ? `A-${String(ticketPreviewData.slot).padStart(2, '0')}`
           : `B-${String(ticketPreviewData.slot).padStart(2, '0')}`)
       : (availableSlot ? availableSlot.code : 'A-01');
-    const createdTicket = registerEntry(
-      ticketPreviewData.plate,
-      vehicleType,
-      slotCode,
-      ticketPreviewData.obs,
-      {
-        name: ticketPreviewData.name,
-        phone: ticketPreviewData.phone,
-      }
-    );
-    setTicketPreviewData((prev) =>
-      prev
-        ? {
-            ...prev,
-            ticketId: createdTicket?.ticketCode || createdTicket?.id || prev.ticketId,
-            dateStr: new Date(createdTicket?.entryTime || Date.now()).toLocaleDateString('es-CL'),
-            timeStr:
-              new Date(createdTicket?.entryTime || Date.now()).toLocaleTimeString('es-CL', {
-                hour: '2-digit',
-                minute: '2-digit',
-              }) + ' hrs',
-          }
-        : null
-    );
-    setIsTicketPreviewConfirmed(true);
-    showToast(`Ticket emitido para ${ticketPreviewData.plate} en cupo ${slotCode}`, 'success');
+    try {
+      const createdTicket = registerEntry(
+        ticketPreviewData.plate,
+        vehicleType,
+        slotCode,
+        ticketPreviewData.obs,
+        {
+          name: ticketPreviewData.name,
+          phone: ticketPreviewData.phone,
+        }
+      );
+      setTicketPreviewData((prev) =>
+        prev
+          ? {
+              ...prev,
+              ticketId: createdTicket?.ticketCode || createdTicket?.id || prev.ticketId,
+              dateStr: new Date(createdTicket?.entryTime || Date.now()).toLocaleDateString('es-CL'),
+              timeStr:
+                new Date(createdTicket?.entryTime || Date.now()).toLocaleTimeString('es-CL', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }) + ' hrs',
+            }
+          : null
+      );
+      setIsTicketPreviewConfirmed(true);
+      showToast(`Ticket emitido para ${ticketPreviewData.plate} en cupo ${slotCode}`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Error al emitir ticket', 'error');
+    }
   };
 
   // Handler: Process Checkout in POS with Thermal 80mm Exit Receipt
@@ -702,12 +708,36 @@ function MainAppContent() {
               <SupportView onShowToast={(msg, type) => showToast(msg, type)} />
             )}
 
-            {/* 7. Ajustes & Parámetros (Desktop) */}
+            {/* 7. Ajustes & Parámetros (Desktop - Restringido por RBAC) */}
             {!shouldRenderSupervisorMobile && isLoggedIn && (effectiveScreen === 'settings' || effectiveScreen === 'config_tarifas' || effectiveScreen === 'config_sistema' || effectiveScreen === 'reportes_database') && (
-              <SettingsView
-                initialSection={effectiveScreen === 'reportes_database' ? 'integraciones' : effectiveScreen === 'config_tarifas' ? 'tarifas' : undefined}
-                onShowToast={(msg, type) => showToast(msg, type)}
-              />
+              (user?.role === 'administrador' || user?.permissions?.canConfigureSystem) ? (
+                <SettingsView
+                  initialSection={effectiveScreen === 'reportes_database' ? 'integraciones' : effectiveScreen === 'config_tarifas' ? 'tarifas' : undefined}
+                  onShowToast={(msg, type) => showToast(msg, type)}
+                />
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 min-h-[500px] text-center font-sans animate-fade-in-up">
+                  <div className="w-16 h-16 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center text-3xl font-black mb-4 shadow-sm border border-rose-200">
+                    🔒
+                  </div>
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200 mb-2">
+                    ACCESO RESTRINGIDO POR RBAC
+                  </span>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">
+                    Módulo de Configuración Reservado a Administración
+                  </h3>
+                  <p className="text-sm text-slate-600 max-w-md mx-auto mb-6 leading-relaxed">
+                    Los usuarios con rol <strong>Operador</strong> tienen estrictamente vedado el acceso a la configuración del sistema, la alteración de tarifas horarias (Ley 20.967) y los parámetros operativos.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate('pos')}
+                    className="px-6 py-2.5 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
+                  >
+                    Volver a Garita POS
+                  </button>
+                </div>
+              )
             )}
 
             {/* 8. Cierre Ciego de Turno (Pantalla Completa) */}
@@ -796,7 +826,7 @@ function MainAppContent() {
               showToast(`Movimiento de caja registrado: $${amount.toLocaleString('es-CL')}`, 'success');
               setIsManualMovementModalOpen(false);
             }}
-            currentCashInDrawer={(currentShift?.initialCash || 50000) || 50000}
+            currentCashInDrawer={currentCashInDrawer}
             activeOperatorName={user.name}
           />
         )}
@@ -814,28 +844,34 @@ function MainAppContent() {
         )}
       </Suspense>
 
-      {/* Floating Toasts Notification System (Posicionado en esquina inferior izquierda) */}
-      <div id="toast-container" className="fixed bottom-4 left-4 z-50 flex flex-col-reverse gap-2.5 pointer-events-none max-w-sm w-full">
+      {/* Floating Toasts Notification System (Posicionado en esquina superior derecha - Estándar POS sin colisiones) */}
+      <div id="toast-container" className="fixed top-16 right-4 z-50 flex flex-col gap-2.5 pointer-events-none max-w-sm w-full">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-center gap-3 px-4 py-3.5 rounded-2xl border shadow-[0_12px_32px_rgba(30,30,47,0.18)] text-[13px] font-medium animate-fade-in-up ${
+            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-[0_12px_32px_rgba(30,30,47,0.22)] text-xs font-semibold animate-fade-in-down backdrop-blur-md ${
               toast.type === 'success'
-                ? 'bg-[#1E1E2F] text-[#E2498A] border-[#E2498A]/40'
+                ? 'bg-[#1E1E2F]/95 text-pink-300 border-[#E2498A]/50'
                 : toast.type === 'error'
-                ? 'bg-[#1E1E2F] text-[#E2498A] border-[#E2498A]/40'
-                : 'bg-[#1E1E2F] text-[#F8FAFC] border-[#2D2D44]'
+                ? 'bg-[#1E1E2F]/95 text-rose-300 border-rose-500/50'
+                : 'bg-[#1E1E2F]/95 text-slate-200 border-slate-700'
             }`}
           >
-            <span className="font-bold text-base shrink-0">
-              {toast.type === 'success' ? '✓' : toast.type === 'error' ? '⚠' : 'ℹ'}
+            <span className="shrink-0">
+              {toast.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-[#E2498A]" />
+              ) : toast.type === 'error' ? (
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+              ) : (
+                <Info className="w-4 h-4 text-blue-400" />
+              )}
             </span>
             <span className="leading-snug">{toast.msg}</span>
           </div>
         ))}
       </div>
 
-      {/* Notificación de Turno No Iniciado: Píldora Ergonómica Flotante & No Invasiva */}
+      {/* Notificación de Turno No Iniciado: Píldora Ergonómica Flotante & No Invasiva en Esquina Inferior Izquierda */}
       {isLoggedIn && effectiveScreen !== 'landing' && (
         <ShiftNotificationPill
           currentShift={currentShift}
@@ -856,10 +892,10 @@ function MainAppContent() {
         <button
           type="button"
           onClick={toggleMobileFrame}
-          className="px-4 py-2.5 rounded-full bg-[#1E1E2F] hover:bg-[#2D2D44] text-white text-xs font-extrabold shadow-xl border border-slate-700 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+          className="px-4 py-2.5 rounded-full bg-[#1E1E2F] hover:bg-[#2D2D44] text-white text-xs font-bold shadow-xl border border-slate-700 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
           title="Alternar entre simulación de pantalla de teléfono móvil (390px) y pantalla completa"
         >
-          <span>{forceMobileFrame ? '💻' : '📱'}</span>
+          {forceMobileFrame ? <Monitor className="w-4 h-4 text-pink-400" /> : <Smartphone className="w-4 h-4 text-pink-400" />}
           <span>{forceMobileFrame ? 'Ver en Pantalla Completa' : 'Simular Móvil (390px)'}</span>
         </button>
       </div>

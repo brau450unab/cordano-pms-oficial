@@ -30,8 +30,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     isLiveSupervisorMode: true,
   },
   administrador: {
-    canOperatePos: true,
-    canOpenCloseShift: true,
+    canOperatePos: false, // Incompatibilidad de Caja: Administrador tiene estrictamente VEDADO el cobro en garita POS
+    canOpenCloseShift: false, // Incompatibilidad de Caja: Administrador tiene estrictamente VEDADA la apertura y cierre de caja
     canViewReports: true,
     canViewAudit: true,
     canConfigureSystem: true,
@@ -62,7 +62,16 @@ export const INITIAL_OPERATOR: User = {
   permissions: ROLE_PERMISSIONS.operador,
 };
 
-export const INITIAL_SUPERVISOR: User = INITIAL_ADMIN;
+export const INITIAL_SUPERVISOR: User = {
+  id: 'usr-sup-maria',
+  name: 'María González (Supervisor)',
+  username: 'supervisor',
+  rut: '16.789.012-3',
+  role: 'supervisor',
+  shiftId: '',
+  email: 'supervisor@cordano.cl',
+  permissions: ROLE_PERMISSIONS.supervisor,
+};
 
 export const INITIAL_TARIFF_VERSIONS: TariffVersion[] = [
   {
@@ -75,13 +84,13 @@ export const INITIAL_TARIFF_VERSIONS: TariffVersion[] = [
     nightSurchargePercent: 20,
     weekendSurchargePercent: 15,
     vehicleRates: {
-      'Automóvil': { minuteRate: 40, hourlyRate: 2400, maxDailyRate: 18000 },
+      'Automóvil': { minuteRate: 35, hourlyRate: 2100, maxDailyRate: 25000 },
       'Camioneta': { minuteRate: 50, hourlyRate: 3000, maxDailyRate: 22000 },
       'Motocicleta': { minuteRate: 25, hourlyRate: 1500, maxDailyRate: 10000 },
       'Furgón / SUV': { minuteRate: 50, hourlyRate: 3000, maxDailyRate: 22000 },
     },
     subsequentTrancheRates: {
-      'Automóvil': 400,
+      'Automóvil': 350,
       'Camioneta': 500,
       'Motocicleta': 250,
       'Furgón / SUV': 500,
@@ -98,13 +107,13 @@ export const INITIAL_TARIFF_CONFIG: TariffConfig = {
   nightSurchargePercent: 20,
   weekendSurchargePercent: 15,
   vehicleRates: {
-    'Automóvil': { minuteRate: 40, hourlyRate: 2400, maxDailyRate: 18000 },
+    'Automóvil': { minuteRate: 35, hourlyRate: 2100, maxDailyRate: 25000 },
     'Camioneta': { minuteRate: 50, hourlyRate: 3000, maxDailyRate: 22000 },
     'Motocicleta': { minuteRate: 25, hourlyRate: 1500, maxDailyRate: 10000 },
     'Furgón / SUV': { minuteRate: 50, hourlyRate: 3000, maxDailyRate: 22000 },
   },
   subsequentTrancheRates: {
-    'Automóvil': 400, // Cada 10 minutos adicionales
+    'Automóvil': 350, // Cada 10 minutos adicionales ($35/min)
     'Camioneta': 500,
     'Motocicleta': 250,
     'Furgón / SUV': 500,

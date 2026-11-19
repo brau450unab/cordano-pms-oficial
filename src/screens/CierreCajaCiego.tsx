@@ -44,6 +44,7 @@ export const CierreCajaCiego: React.FC = () => {
     currentShift,
     tickets,
     cashToleranceClp,
+    currentCashInDrawer: contextCashInDrawer,
     performBlindClose,
     registerCashMovement,
     signShiftCopy,
@@ -129,33 +130,38 @@ export const CierreCajaCiego: React.FC = () => {
   const activeTicketsInParking = tickets.filter((t) => t.status === 'activo');
   const hasActiveVehicles = activeTicketsInParking.length > 0;
 
-  // Cálculos de tickets electrónicos del turno
-  const electronicTickets = tickets.filter(
-    (t) => t.status === 'pagado' && t.paymentMethod !== 'efectivo'
+  // Cálculos de tickets electrónicos del turno (soporta pagos únicos y mixtos)
+  const paidTickets = tickets.filter((t) => t.status === 'pagado');
+  const posTickets = paidTickets.filter(
+    (t) =>
+      t.paymentMethod === 'tarjeta_debito' ||
+      t.paymentMethod === 'tarjeta_credito' ||
+      (t.paymentSplits && t.paymentSplits.some((s) => s.method === 'tarjeta_debito' || s.method === 'tarjeta_credito'))
   );
-  const posTickets = electronicTickets.filter(
-    (t) => t.paymentMethod === 'tarjeta_debito' || t.paymentMethod === 'tarjeta_credito'
-  );
-  const transferTickets = electronicTickets.filter(
-    (t) => t.paymentMethod === 'transferencia'
+  const transferTickets = paidTickets.filter(
+    (t) =>
+      t.paymentMethod === 'transferencia' ||
+      (t.paymentSplits && t.paymentSplits.some((s) => s.method === 'transferencia'))
   );
 
-  const totalPosSystemAmount = posTickets.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
-  const totalTransferSystemAmount = transferTickets.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+  const totalPosSystemAmount = paidTickets.reduce((sum, t) => {
+    if (t.paymentSplits && t.paymentSplits.length > 0) {
+      return sum + t.paymentSplits.filter((s) => s.method === 'tarjeta_debito' || s.method === 'tarjeta_credito').reduce((sSum, s) => sSum + s.amount, 0);
+    }
+    return sum + (t.paymentMethod === 'tarjeta_debito' || t.paymentMethod === 'tarjeta_credito' ? (t.totalAmount || 0) : 0);
+  }, 0);
+
+  const totalTransferSystemAmount = paidTickets.reduce((sum, t) => {
+    if (t.paymentSplits && t.paymentSplits.length > 0) {
+      return sum + t.paymentSplits.filter((s) => s.method === 'transferencia').reduce((sSum, s) => sSum + s.amount, 0);
+    }
+    return sum + (t.paymentMethod === 'transferencia' ? (t.totalAmount || 0) : 0);
+  }, 0);
 
   const isShiftClosed = currentShift.status === 'cerrado' || closedShiftResult !== null;
   const activeShift = closedShiftResult || currentShift;
 
-  const currentCashInDrawer =
-    currentShift.initialCash +
-    tickets
-      .filter((t) => t.status === 'pagado' && t.paymentMethod === 'efectivo')
-      .reduce((sum, t) => sum + (t.totalAmount || 0), 0) +
-    (currentShift.cashMovements?.reduce((sum, m) => {
-      if (m.type === 'INGRESO_MANUAL') return sum + m.amount;
-      if (m.type === 'GASTO_MENOR' || m.type === 'RETIRO_SANGRIA') return sum - m.amount;
-      return sum;
-    }, 0) || 0);
+  const currentCashInDrawer = contextCashInDrawer;
 
   const totalDeclared =
     (activeShift.declaredCash || 0) +
@@ -175,14 +181,32 @@ export const CierreCajaCiego: React.FC = () => {
   const pendingApprovals = currentShift.pendingApprovals?.filter(a => a.status === 'pending') || [];
   const hasPendingApprovals = pendingApprovals.length > 0 && !isShiftClosed;
 
-  // Resolución de aprobaciones diferidas con PIN de Administrador
+  // Validación de PIN de Supervisor (soporta tanto 9988 como 9999 para visación express)
+  const isValidSupervisorExpressPin = (pin: string) => {
+    const clean = pin.trim();
+    return clean === '9988' || clean === '9999';
+  };
+
+  // Resolución individual de aprobaciones diferidas con PIN de Supervisor (9988 o 9999)
   const handleResolvePending = (id: string, status: 'approved' | 'rejected') => {
-    if (adminPinExpress.trim() !== '9988') {
-      setExpressError('PIN de Administrador incorrecto (ej: 9988).');
+    if (!isValidSupervisorExpressPin(adminPinExpress)) {
+      setExpressError('PIN de Supervisor incorrecto (ingrese 9988 o 9999).');
       return;
     }
     setExpressError('');
     resolvePendingApproval(id, status);
+  };
+
+  // Visación en LOTE de excepciones diferidas con PIN de supervisor (9988 o 9999)
+  const handleResolveAllPending = (status: 'approved' | 'rejected') => {
+    if (!isValidSupervisorExpressPin(adminPinExpress)) {
+      setExpressError('PIN de Supervisor incorrecto (ingrese 9988 o 9999 para visación en lote).');
+      return;
+    }
+    setExpressError('');
+    pendingApprovals.forEach((approval) => {
+      resolvePendingApproval(approval.id, status);
+    });
   };
 
   // Traspasar todos los vehículos en 1 clic
@@ -572,32 +596,59 @@ export const CierreCajaCiego: React.FC = () => {
                     {pendingApprovals.length} Aprobación(es) Express Pendientes de Validación
                   </h3>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Durante las horas punta, se postergó la validación con PIN de supervisor para liberar el flujo.
-                    Ingrese el PIN de Administrador (ej: <span className="font-mono font-bold">9988</span>) para autorizarlas o rechazarlas.
+                    Durante las horas punta, se postergó la validación con PIN de supervisor para liberar el flujo vehicular.
+                    Ingrese el PIN de Supervisor (soporta <span className="font-mono font-bold">9988</span> o <span className="font-mono font-bold">9999</span>) para visar de forma individual o en lote.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3.5 rounded-xl border border-slate-200">
-                <div className="w-full sm:w-auto flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-slate-500" />
-                  <span className="text-xs font-bold text-slate-700 whitespace-nowrap">PIN Administrador:</span>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-slate-500" />
+                    <span className="text-xs font-bold text-slate-700 whitespace-nowrap">PIN Supervisor:</span>
+                  </div>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    value={adminPinExpress}
+                    onChange={(e) => {
+                      setAdminPinExpress(e.target.value);
+                      setExpressError('');
+                    }}
+                    placeholder="9988 / 9999"
+                    className="w-full sm:w-36 h-10 px-3 text-center text-lg tracking-widest font-mono font-bold rounded-xl border border-slate-300 focus:border-[#E2498A] focus:outline-none"
+                  />
                 </div>
-                <input
-                  type="password"
-                  maxLength={4}
-                  value={adminPinExpress}
-                  onChange={(e) => {
-                    setAdminPinExpress(e.target.value);
-                    setExpressError('');
-                  }}
-                  placeholder="••••"
-                  className="w-full sm:w-36 h-10 px-3 text-center text-lg tracking-widest font-mono font-bold rounded-xl border border-slate-300 focus:border-[#E2498A] focus:outline-none"
-                />
-                {expressError && (
-                  <span className="text-xs text-rose-600 font-bold">{expressError}</span>
-                )}
+
+                {/* Acciones de Visación en Lote */}
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleResolveAllPending('rejected')}
+                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                    title="Rechazar todas las excepciones pendientes en lote"
+                  >
+                    ✕ Rechazar Todas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleResolveAllPending('approved')}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5 active:scale-95"
+                    title="Visar y aprobar todas las excepciones diferidas de una sola vez"
+                  >
+                    <span>⚡</span>
+                    <span>Visar &amp; Aprobar Todas en Lote</span>
+                  </button>
+                </div>
               </div>
+
+              {expressError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-bold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{expressError}</span>
+                </div>
+              )}
 
               <div className="space-y-2">
                 {pendingApprovals.map((approval) => (
@@ -1497,6 +1548,34 @@ export const CierreCajaCiego: React.FC = () => {
                   <span className="text-slate-600 mt-0.5 block font-sans">{activeShift.closeJustification}</span>
                 </div>
               )}
+
+              {/* Sello Criptográfico Inmutable SHA-256 (Arqueo Sellado Definitivo) */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#1E1E2F] to-[#2D2D44] text-white border border-[#3E3E5E] space-y-2.5 shadow-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <span className="font-black text-xs uppercase tracking-wider text-emerald-400 block leading-none">
+                        Sello Criptográfico SHA-256 Inmutable
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        Sellado digital anti-reapertura y anti-adulteración (Ley 20.967)
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    SELLADO DEFINITIVO
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 font-mono text-[11px] text-slate-200 break-all select-all flex items-center justify-between gap-2">
+                  <span>{activeShift.hash || activeShift.hashAuditoria || 'SHA256:INMUTABLE-VERIFIED'}</span>
+                  <span className="text-[9px] text-slate-500 uppercase shrink-0 font-bold">SHA-256</span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+                  <span>Folio RVD: <strong className="text-slate-300 font-mono">{activeShift.rvdFolio || 'RVD-SII'}</strong></span>
+                  <span className="text-emerald-400 font-bold">✓ Cierre Inmutable (No Reaperturable)</span>
+                </div>
+              </div>
             </div>
           )}
 

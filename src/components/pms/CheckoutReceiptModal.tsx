@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Printer, Download, CheckCircle2 } from 'lucide-react';
 import { generateExitReceiptPdf } from '../../utils/pdfGenerator';
 import { generateQrSvgString } from '../../utils/qrCodeGenerator';
 import { PaymentMethod } from '../../types';
@@ -79,6 +80,8 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
       ? 'Tarjeta POS Débito'
       : data.paymentMethod === 'tarjeta_credito'
       ? 'Tarjeta POS Crédito'
+      : data.paymentMethod === 'mixto'
+      ? 'Pago Mixto (Efectivo + POS / Transf.)'
       : 'Transferencia Bancaria';
 
   // Formateador telefónico para WhatsApp (Chile / Internacional)
@@ -417,7 +420,7 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
               onClick={handleTriggerPrint}
               className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
-              <span>🖨️</span>
+              <Printer className="w-3.5 h-3.5 text-slate-700" />
               <span>Imprimir Boleta (80mm)</span>
             </button>
 

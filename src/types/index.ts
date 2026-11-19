@@ -29,7 +29,14 @@ export type SlotStatus = 'disponible' | 'ocupado' | 'reservado' | 'mantenimiento
 
 export type TicketStatus = 'activo' | 'pagado' | 'anulado';
 
-export type PaymentMethod = 'efectivo' | 'tarjeta_debito' | 'tarjeta_credito' | 'transferencia' | 'convenio';
+export type PaymentMethod = 'efectivo' | 'tarjeta_debito' | 'tarjeta_credito' | 'transferencia' | 'convenio' | 'mixto';
+
+export interface PaymentSplit {
+  method: Exclude<PaymentMethod, 'mixto'>;
+  amount: number;
+  voucherNumber?: string;
+  notes?: string;
+}
 
 export type UserRole = 'operador' | 'supervisor' | 'administrador';
 
@@ -145,6 +152,7 @@ export interface Ticket {
   paidAmount?: number;
   changeAmount?: number;
   paymentMethod?: PaymentMethod;
+  paymentSplits?: PaymentSplit[];
   status: TicketStatus;
   notes?: string;
   operatorEntryName: string;
@@ -224,6 +232,10 @@ export interface CashMovement {
   authorizedBySupervisor?: string;
   supervisorTotpPin?: string;
   voucherFolio?: string;
+  destination?: string; // e.g. "Administración Central / Bóveda Cordano"
+  cashInDrawerBefore?: number;
+  cashInDrawerAfter?: number;
+  isCashDrop?: boolean;
 }
 
 
@@ -301,7 +313,9 @@ export interface AuditLog {
     | 'MOVIMIENTO_CAJA_RETIRO'
     | 'CHECKLIST_APERTURA'
     | 'CLIENTE_REGISTRADO'
-    | 'ASIGNACION_SLOT';
+    | 'ASIGNACION_SLOT'
+    | 'VIOLACION_ANTI_PASSBACK'
+    | 'SANGRIA_EFECTIVO';
   details: string;
   severity: 'info' | 'warning' | 'critical';
   authorizedBy?: string;

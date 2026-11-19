@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FlaskConical, Car, AlertTriangle, ShieldCheck, Play, X } from 'lucide-react';
 import { useParking } from '../../context/ParkingContext';
 import { VehicleType } from '../../types';
 
@@ -93,14 +94,14 @@ export const PatioTestSimulator: React.FC<PatioTestSimulatorProps> = ({ onShowTo
 
   return (
     <>
-      {/* Botón flotante para abrir el simulador de patio */}
+      {/* Botón flotante para abrir el simulador de patio (Ubicado en esquina inferior derecha, desacoplado de las alertas) */}
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 md:bottom-4 left-4 z-40 px-3 py-1.5 rounded-full bg-[#1E1E2F] hover:bg-slate-800 text-white border border-slate-600 shadow-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer backdrop-blur-md active:scale-95 transition-all"
+        className="fixed bottom-16 right-5 z-40 px-3 py-1.5 rounded-full bg-[#1E1E2F] hover:bg-slate-800 text-white border border-slate-700 shadow-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer backdrop-blur-md active:scale-95 transition-all"
         title="Abrir Simulador de Supervisión y Patio"
       >
-        <span>🧪</span>
+        <FlaskConical className="w-3.5 h-3.5 text-pink-400" />
         <span className="hidden sm:inline">Simulador</span>
       </button>
 
@@ -110,7 +111,9 @@ export const PatioTestSimulator: React.FC<PatioTestSimulatorProps> = ({ onShowTo
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-5 space-y-4 animate-fade-in-up text-slate-800">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🧪</span>
+                <div className="w-8 h-8 rounded-xl bg-pink-50 flex items-center justify-center text-[#E2498A]">
+                  <FlaskConical className="w-4 h-4" />
+                </div>
                 <div>
                   <h4 className="font-extrabold text-sm text-slate-900 leading-tight">Simulador de Pruebas</h4>
                   <span className="text-[10px] text-slate-400 font-medium">Testeo de Supervisión &amp; Espacio</span>
@@ -119,9 +122,9 @@ export const PatioTestSimulator: React.FC<PatioTestSimulatorProps> = ({ onShowTo
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 font-bold text-xs cursor-pointer"
+                className="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center font-bold text-xs cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -136,7 +139,7 @@ export const PatioTestSimulator: React.FC<PatioTestSimulatorProps> = ({ onShowTo
                 className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-between transition cursor-pointer"
               >
                 <span className="flex items-center gap-2">
-                  <span>🚗</span>
+                  <Car className="w-4 h-4 text-slate-600" />
                   <span>Inyectar 5 Vehículos en Patio</span>
                 </span>
                 <span className="text-[10px] font-mono text-slate-500">+5 cupos</span>
@@ -148,7 +151,7 @@ export const PatioTestSimulator: React.FC<PatioTestSimulatorProps> = ({ onShowTo
                 className="w-full py-2.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-bold text-xs flex items-center justify-between transition cursor-pointer"
               >
                 <span className="flex items-center gap-2">
-                  <span>⚠️</span>
+                  <AlertTriangle className="w-4 h-4 text-rose-600" />
                   <span>Generar Sobrestadía (&gt; 2h)</span>
                 </span>
                 <span className="text-[10px] font-mono text-rose-600">Alerta Roja</span>
@@ -160,7 +163,7 @@ export const PatioTestSimulator: React.FC<PatioTestSimulatorProps> = ({ onShowTo
                 className="w-full py-2.5 px-3 rounded-xl bg-pink-50 hover:bg-pink-100 text-[#E2498A] border border-pink-200 font-bold text-xs flex items-center justify-between transition cursor-pointer"
               >
                 <span className="flex items-center gap-2">
-                  <span>🔐</span>
+                  <ShieldCheck className="w-4 h-4 text-[#E2498A]" />
                   <span>Simular Excepción para Supervisor</span>
                 </span>
                 <span className="text-[10px] font-mono text-[#E2498A]">PIN Req.</span>
@@ -172,7 +175,7 @@ export const PatioTestSimulator: React.FC<PatioTestSimulatorProps> = ({ onShowTo
                 className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs flex items-center justify-between transition cursor-pointer"
               >
                 <span className="flex items-center gap-2">
-                  <span>🚀</span>
+                  <Play className="w-4 h-4 text-emerald-600" />
                   <span>Apertura Rápida de Turno</span>
                 </span>
                 <span className="text-[10px] font-mono text-emerald-600">$50.000</span>

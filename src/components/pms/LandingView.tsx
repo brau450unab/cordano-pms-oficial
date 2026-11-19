@@ -11,7 +11,13 @@ import {
   KeyRound,
   X,
   Activity,
-  Car
+  Car,
+  Key,
+  Shield,
+  MessageCircle,
+  Zap,
+  Users,
+  MapPin,
 } from 'lucide-react';
 
 interface LandingViewProps {
@@ -62,8 +68,8 @@ export const LandingView: React.FC<LandingViewProps> = ({
   const carouselImages = [
     {
       url: '/assets/images/acceso-garita-barrera.jpg',
-      title: 'Control de Acceso Automatizado LPR',
-      desc: 'Barrera vehicular inteligente con lectura de patente y tótem digital de garita',
+      title: 'Control de Garita Asistido por Software & Custodia 24/7 en Serrano 447',
+      desc: 'Puesto de garita asistido por software, custodia física permanente y emisión de ticket en 80mm',
     },
     {
       url: '/assets/images/patio-central-serrano447.jpg',
@@ -337,8 +343,8 @@ export const LandingView: React.FC<LandingViewProps> = ({
             </>
           ) : (
             <>
-              <span>Enviar</span>
-              <span className="text-xl">💬</span>
+              <span>Enviar Cotización</span>
+              <MessageCircle className="w-4 h-4 ml-1.5" />
             </>
           )}
         </button>
@@ -436,7 +442,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="braulio@automatizable.cl o cajero@cordano.cl"
+                    placeholder="ej: usuario o correo autorizado"
                     className="w-full h-12 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#E2498A] focus:bg-white"
                   />
                 </div>
@@ -465,27 +471,32 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 <span>{loginState === 'loading' ? 'Ingresando...' : 'Iniciar Sesión'}</span>
               </button>
 
-              <div className="pt-2 border-t border-slate-100 space-y-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block text-center">
-                  Acceso Rápido Directo
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('cajero')}
-                    className="py-2.5 px-2 bg-pink-50 hover:bg-pink-100 border border-[#E2498A]/30 rounded-xl text-[11px] font-black text-[#C83472] transition-colors cursor-pointer text-center"
-                  >
-                    🔑 Cajero Garita
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('admin')}
-                    className="py-2.5 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl text-[11px] font-black text-slate-800 transition-colors cursor-pointer text-center"
-                  >
-                    🛡️ Administrador
-                  </button>
+              <details className="pt-2 border-t border-slate-100 group">
+                <summary className="text-[11px] font-bold text-slate-400 hover:text-slate-600 cursor-pointer list-none flex items-center justify-center gap-1 select-none">
+                  <span>⚙️ Acceso de Prueba / Evaluación</span>
+                  <span className="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▾</span>
+                </summary>
+                <div className="pt-2.5 pb-1 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickLogin('cajero')}
+                      className="py-2 px-2 bg-pink-50 hover:bg-pink-100 border border-[#E2498A]/30 rounded-xl text-[10px] font-black text-[#C83472] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Key className="w-3 h-3 text-[#E2498A]" />
+                      <span>Cajero Garita</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickLogin('admin')}
+                      className="py-2 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl text-[10px] font-black text-slate-800 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Shield className="w-3 h-3 text-slate-700" />
+                      <span>Administrador</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </details>
             </form>
           )}
 
@@ -681,7 +692,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                           required
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
-                          placeholder="braulio@automatizable.cl o cajero@cordano.cl"
+                          placeholder="ej: usuario o correo autorizado"
                           className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#E2498A] focus:bg-white focus:ring-4 focus:ring-[#E2498A]/10 transition-all font-sans"
                         />
                         <User className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -714,34 +725,36 @@ export const LandingView: React.FC<LandingViewProps> = ({
                       <span>{loginState === 'loading' ? 'Ingresando...' : 'Iniciar Sesión'}</span>
                     </button>
 
-                    {/* Botones de Acceso Rápido Directo (Demo / Evaluación) */}
-                    <div className="pt-3 border-t border-slate-100 space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                          Acceso Rápido 1-Clic
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400 font-mono">v2.0 Master</span>
+                    {/* Acceso discreto plegable para pruebas y evaluación */}
+                    <details className="pt-3 border-t border-slate-100 group">
+                      <summary className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 hover:text-slate-600 cursor-pointer list-none flex items-center justify-between select-none">
+                        <span>⚙️ Accesos de Prueba / Evaluación</span>
+                        <span className="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▾</span>
+                      </summary>
+                      <div className="pt-3 space-y-2">
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => handleQuickLogin('cajero')}
+                            className="py-2.5 px-3 bg-pink-50 hover:bg-pink-100/80 border border-[#E2498A]/30 rounded-xl text-xs font-black text-[#C83472] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
+                          >
+                            <Key className="w-3.5 h-3.5 text-[#E2498A]" />
+                            <span>Cajero Garita</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickLogin('admin')}
+                            className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200/80 border border-slate-300 rounded-xl text-xs font-black text-slate-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
+                          >
+                            <Shield className="w-3.5 h-3.5 text-slate-700" />
+                            <span>Administrador</span>
+                          </button>
+                        </div>
+                        <p className="text-center text-[10px] text-slate-400 font-medium">
+                          Modo evaluador de garita · Recinto Serrano 447
+                        </p>
                       </div>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => handleQuickLogin('cajero')}
-                          className="py-3 px-3 bg-pink-50 hover:bg-pink-100/80 border border-[#E2498A]/30 rounded-xl text-xs font-black text-[#C83472] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
-                        >
-                          <span>🔑 Cajero Garita</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickLogin('admin')}
-                          className="py-3 px-3 bg-slate-100 hover:bg-slate-200/80 border border-slate-300 rounded-xl text-xs font-black text-slate-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
-                        >
-                          <span>🛡️ Administrador</span>
-                        </button>
-                      </div>
-                      <p className="text-center text-[10px] text-slate-400 font-medium">
-                        Operador: <code className="font-mono text-slate-600 font-bold">cajero@cordano.cl</code> | Admin: <code className="font-mono text-slate-600 font-bold">braulio@automatizable.cl</code>
-                      </p>
-                    </div>
+                    </details>
                   </form>
                 </div>
               )}
@@ -765,14 +778,18 @@ export const LandingView: React.FC<LandingViewProps> = ({
                     </div>
                     <div>
                        <h3 className="text-4xl font-black text-white tracking-tight">Serrano 447, <span className="text-[#E2498A]">Iquique</span></h3>
-                       <p className="text-slate-400 font-medium text-lg mt-1">Operación 24/7 • Tarifas Inteligentes</p>
+                       <p className="text-slate-400 font-medium text-lg mt-1">Operación 24/7 • Tarifa Oficial Automóvil $35/min • Gracia 15 min</p>
                     </div>
                  </div>
                  
-                 <div className="flex gap-12">
+                 <div className="flex gap-8 sm:gap-10">
                     <div>
                        <div className="text-white font-black text-5xl">30</div>
                        <div className="text-sm font-bold uppercase tracking-wider text-[#E2498A] mt-2">Plazas Max</div>
+                    </div>
+                    <div>
+                       <div className="text-white font-black text-5xl">$35</div>
+                       <div className="text-sm font-bold uppercase tracking-wider text-[#E2498A] mt-2">CLP/min Auto</div>
                     </div>
                     <div>
                        <div className="text-white font-black text-5xl">100%</div>
@@ -902,8 +919,8 @@ export const LandingView: React.FC<LandingViewProps> = ({
                         </div>
 
                         <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10">
-                           <div className="w-8 h-8 rounded-xl bg-[#E2498A]/20 text-[#E2498A] flex items-center justify-center shrink-0 font-black text-sm">
-                              🛡️
+                           <div className="w-8 h-8 rounded-xl bg-[#E2498A]/20 text-[#E2498A] flex items-center justify-center shrink-0">
+                              <ShieldCheck className="w-4 h-4" />
                            </div>
                            <div>
                               <h4 className="text-sm font-extrabold text-white">Plazas Numeradas y Techadas</h4>
@@ -912,12 +929,12 @@ export const LandingView: React.FC<LandingViewProps> = ({
                         </div>
 
                         <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10">
-                           <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-black text-sm">
-                              ⚡
+                           <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                              <Zap className="w-4 h-4" />
                            </div>
                            <div>
-                              <h4 className="text-sm font-extrabold text-white">Acceso Automatizado</h4>
-                              <p className="text-xs text-slate-400 mt-0.5">Lectura rápida de patente en garita y validación en 3 segundos.</p>
+                              <h4 className="text-sm font-extrabold text-white">Control de Garita Asistido</h4>
+                              <p className="text-xs text-slate-400 mt-0.5">Registro asistido por software y custodia física 24/7 en Serrano 447.</p>
                            </div>
                         </div>
                      </div>
@@ -925,7 +942,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
 
                   {/* Datos del recinto */}
                   <div className="p-4 rounded-2xl bg-white/[0.07] border border-white/10 flex items-center justify-between text-xs font-bold text-slate-300">
-                     <span>📍 Serrano 447, Iquique</span>
+                     <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-[#E2498A]" /> Serrano 447, Iquique</span>
                      <span className="text-[#E2498A]">Capacidad: 30 Plazas</span>
                   </div>
                </div>
@@ -985,7 +1002,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                  >
                     <div>
                        <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 text-xl font-bold group-hover:scale-110 transition-transform">
-                          ⚡
+                          <Zap className="w-6 h-6" />
                        </div>
                        <div className="flex items-center justify-between mb-2">
                           <h4 className="font-extrabold text-lg text-[#1E1E2F] group-hover:text-[#E2498A] transition-colors">POS Garita</h4>
@@ -1018,7 +1035,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                  >
                     <div>
                        <div className="w-12 h-12 bg-blue-100 text-[#E2498A] rounded-2xl flex items-center justify-center mb-4 text-xl font-bold group-hover:scale-110 transition-transform">
-                          🔒
+                          <Lock className="w-6 h-6" />
                        </div>
                        <div className="flex items-center justify-between mb-2">
                           <h4 className="font-extrabold text-lg text-[#1E1E2F] group-hover:text-[#E2498A] transition-colors">Control de Turnos</h4>
@@ -1051,7 +1068,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                  >
                     <div>
                        <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-4 text-xl font-bold group-hover:scale-110 transition-transform">
-                          📊
+                          <Activity className="w-6 h-6" />
                        </div>
                        <div className="flex items-center justify-between mb-2">
                           <h4 className="font-extrabold text-lg text-[#1E1E2F] group-hover:text-[#E2498A] transition-colors">Auditoría &amp; Reportes</h4>
@@ -1084,7 +1101,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                  >
                     <div>
                        <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-4 text-xl font-bold group-hover:scale-110 transition-transform">
-                          🤝
+                          <Users className="w-6 h-6" />
                        </div>
                        <div className="flex items-center justify-between mb-2">
                           <h4 className="font-extrabold text-lg text-[#1E1E2F] group-hover:text-[#E2498A] transition-colors">Convenios y Flotas</h4>
@@ -1117,7 +1134,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                  >
                     <div>
                        <div className="w-12 h-12 bg-cyan-100 text-cyan-600 rounded-2xl flex items-center justify-center mb-4 text-xl font-bold group-hover:scale-110 transition-transform">
-                          🗺️
+                          <MapPin className="w-6 h-6" />
                        </div>
                        <div className="flex items-center justify-between mb-2">
                           <h4 className="font-extrabold text-lg text-[#1E1E2F] group-hover:text-[#E2498A] transition-colors">Plano 2D Serrano 447</h4>
@@ -1150,7 +1167,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                  >
                     <div>
                        <div className="w-12 h-12 bg-[#E2498A]/10 text-[#E2498A] rounded-2xl flex items-center justify-center mb-4 text-xl font-bold group-hover:scale-110 transition-transform">
-                          🛡️
+                          <ShieldCheck className="w-6 h-6" />
                        </div>
                        <div className="flex items-center justify-between mb-2">
                           <h4 className="font-extrabold text-lg text-[#1E1E2F] group-hover:text-[#E2498A] transition-colors">Seguridad &amp; TOTP</h4>
@@ -1311,7 +1328,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                     <input
                       required
                       type="text"
-                      placeholder="braulio@automatizable.cl o braulio"
+                      placeholder="ej: usuario o correo autorizado"
                       value={username}
                       onChange={e => setUsername(e.target.value)}
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#E2498A] focus:bg-white focus:ring-4 focus:ring-[#E2498A]/10 transition-all text-[#1E1E2F]"

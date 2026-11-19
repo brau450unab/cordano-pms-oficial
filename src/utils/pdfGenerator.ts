@@ -791,9 +791,12 @@ export const generateDailyAccountingBookPdf = (
   const totalNeto = Math.round(totalBruto / 1.19);
   const totalIva19 = totalBruto - totalNeto;
 
-  const totalCash = paidTickets
-    .filter((t) => t.paymentMethod === 'efectivo')
-    .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+  const totalCash = paidTickets.reduce((sum, t) => {
+    if (t.paymentSplits && t.paymentSplits.length > 0) {
+      return sum + t.paymentSplits.filter((s) => s.method === 'efectivo').reduce((sSum, s) => sSum + s.amount, 0);
+    }
+    return sum + (t.paymentMethod === 'efectivo' ? (t.totalAmount || 0) : 0);
+  }, 0);
   const totalCard = totalBruto - totalCash;
 
   // ── HOJA 1: CARÁTULA TRIBUTARIA, ASIENTO ERP Y CONCILIACIÓN FÍSICA ──
@@ -1293,9 +1296,12 @@ export const generateRevenueReportPdf = (
 
   const paidTickets = ticketsList.filter((t) => t.status === 'pagado');
   const totalRevenue = paidTickets.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
-  const totalCash = paidTickets
-    .filter((t) => t.paymentMethod === 'efectivo')
-    .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+  const totalCash = paidTickets.reduce((sum, t) => {
+    if (t.paymentSplits && t.paymentSplits.length > 0) {
+      return sum + t.paymentSplits.filter((s) => s.method === 'efectivo').reduce((sSum, s) => sSum + s.amount, 0);
+    }
+    return sum + (t.paymentMethod === 'efectivo' ? (t.totalAmount || 0) : 0);
+  }, 0);
   const totalCard = totalRevenue - totalCash;
 
   const totalVehicles = ticketsList.length;

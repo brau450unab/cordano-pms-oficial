@@ -353,9 +353,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
       {
         id: 'cat-auto',
         name: 'Automóvil',
-        minuteRate: rawRates['Automóvil']?.minuteRate || 40,
-        trancheRate: rawTranches['Automóvil'] || 400,
-        maxDailyRate: rawRates['Automóvil']?.maxDailyRate || 18000,
+        minuteRate: rawRates['Automóvil']?.minuteRate || 35,
+        trancheRate: rawTranches['Automóvil'] || 350,
+        maxDailyRate: rawRates['Automóvil']?.maxDailyRate || 25000,
       },
       {
         id: 'cat-camioneta',
@@ -636,7 +636,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
       vehicleType: 'Automóvil',
       slotCode: 'A-01',
       entryTime: new Date().toISOString(),
-      rate: categories[0]?.minuteRate || 40,
+      rate: categories[0]?.minuteRate || 35,
       customerName: 'Cliente Prueba Garita',
       customerPhone: '+56 9 8765 4321',
       notes: 'Test de hardware, corte de papel y alineación de fuentes',
@@ -1125,6 +1125,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
         { id: 'generales', label: 'Tema & Accesibilidad Personal', icon: '🎨' },
       ];
 
+  // Bloqueo RBAC Estricto: Operadores tienen VEDADO el acceso a Configuración y Parámetros
+  if (activeUser?.role === 'operador') {
+    return (
+      <div id="view-settings-restricted" className="p-8 max-w-xl mx-auto my-12 bg-white border border-rose-200 rounded-3xl shadow-xl text-center space-y-4 font-sans animate-fade-in-up">
+        <div className="w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-3xl font-black mx-auto shadow-sm">
+          🔒
+        </div>
+        <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200 inline-block">
+          ACCESO RESTRINGIDO POR RBAC
+        </span>
+        <h3 className="text-xl font-black text-slate-900 tracking-tight">
+          Configuración Vedada a Operadores
+        </h3>
+        <p className="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
+          El rol Operador tiene estrictamente vedado el acceso al módulo de configuración del sistema, la modificación de tarifas horarias (Ley 20.967) y la alteración de parámetros operativos de Serrano 447.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div id="view-settings" className="p-4 sm:p-6 lg:p-8 w-full max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 space-y-6 text-[#1E1E2F] animate-fade-in-up font-sans">
       {/* ── HEADER ROLE-ADAPTIVE ── */}
@@ -1153,7 +1173,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
         <aside className="md:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-xs p-3 space-y-1">
           {availableSections.map((item) => {
             const active = activeSection === item.id;
-            return (
+        return (
               <button
                 key={item.id}
                 type="button"
@@ -2139,7 +2159,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
                   // Contar permisos activos
                   const activePermsCount = Object.values(u.permissions || {}).filter(Boolean).length;
 
-                  return (
+              return (
                     <div
                       key={u.id}
                       onClick={() => setSelectedUserModal({ ...u })}
@@ -2927,7 +2947,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                   {(Object.entries(databaseTablesData) as [string, CanonicalTableData][]).map(([key, tbl]) => {
                     const isSelected = selectedTableKey === key;
-                    return (
+                return (
                       <button
                         key={key}
                         type="button"
@@ -3027,7 +3047,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
                         : currentTable.rows;
 
                       if (filteredRows.length === 0) {
-                        return (
+                    return (
                           <div className="p-8 text-center text-xs text-[#64748B] bg-[#F8FAFC]">
                             {currentTable.rows.length === 0
                               ? 'No hay registros cargados aún en esta tabla.'
@@ -3036,7 +3056,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
                         );
                       }
 
-                      return (
+                  return (
                         <table className="w-full text-left border-collapse font-mono text-xs">
                           <thead className="bg-[#1E1E2F] text-white text-[10px] uppercase sticky top-0 z-10">
                             <tr>
@@ -3057,7 +3077,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
                                 {currentTable.columns.map((col) => {
                                   const cellVal = row[col];
                                   if (typeof cellVal === 'boolean') {
-                                    return (
+                                return (
                                       <td key={col} className="p-2.5 whitespace-nowrap">
                                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                                           cellVal ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
@@ -3076,7 +3096,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
 
                                   const isMoney = typeof cellVal === 'number' && (col.includes('monto') || col.includes('fondo') || col.includes('precio') || col.includes('declarado') || col.includes('esperado') || col.includes('diferencia'));
 
-                                  return (
+                              return (
                                     <td key={col} className="p-2.5 whitespace-nowrap">
                                       {isMoney ? (
                                         <span className="font-bold text-[#1E1E2F]">
@@ -3133,7 +3153,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialSection, onSh
               <div>Folio: TKT-20261013-0001</div>
               <div className="text-base font-black tracking-widest text-[#E2498A] my-1">ABCD-12</div>
               <div>Categoría: {categories[0]?.name || 'Automóvil'}</div>
-              <div>Tarifa: $ {categories[0]?.minuteRate || 40} CLP/minuto</div>
+              <div>Tarifa: $ {categories[0]?.minuteRate || 35} CLP/minuto</div>
               <div>Gracia: {gracePeriod} min libres ($0 CLP)</div>
               <div className="border-b border-slate-200 my-2" />
               <div className="text-[9px] text-slate-400">

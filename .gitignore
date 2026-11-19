@@ -8,6 +8,7 @@ dist/
 .e2e/report.json
 .e2e/results/
 .e2e/logs/
+tester-army-e2e/
 
 # Environment and local secrets
 .env
@@ -16,6 +17,8 @@ dist/
 
 # IDE and agent caches
 .gemini/
+.agent/
+.impeccable/
 .system_generated/
 *.log
 

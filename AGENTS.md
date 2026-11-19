@@ -57,3 +57,14 @@
 3. **Cierre Ciego de Turno**: El arqueo es ciego (la UI no muestra faltante/sobrante al cajero). El cajero declara el fondo que deja en gaveta + sobre entregado. El cierre es definitivo con hash `SHA-256`, detiene el temporizador y bloquea/desautentica el POS sin bucle de "turno abierto".
 4. **Documentos Imprimibles y Reporte Z**: Formato en **hoja A4 estándar** corporativa, con **dos casillas para firmas físicas al pie** (Operador y Supervisor) y emisión obligatoria en **dos copias** (Garita y Administración).
 5. **Tolerancia y Contingencias**: Gracia de 15 minutos; recargo por ticket extraviado `$ 8.000 CLP` con registro antifraude y validación diferida al cierre.
+
+---
+
+## 4. DIRECTIVA PRIMARIA DE ENTORNO: SANDBOX / ENTORNO DE PRUEBAS LOCAL
+1. **Objetivo Exclusivo de los Agentes**:
+   - Todo agente, subagente o automatización en este proyecto tiene como foco y objetivo de trabajo exclusivo el **Entorno de Pruebas Local** (`http://localhost:3000` junto con su túnel de acceso remoto seguro).
+   - El código fuente y entorno de experimentación reside únicamente en `C:\Users\BraulioAM\OneDrive - UNIVERSIDAD ANDRES BELLO\PROYECTOS ANTIGRAVITY\PROYECTO CORDANO ENTREGABLE`.
+2. **Blindaje Absoluto de la Versión Publicada en Producción**:
+   - La versión publicada oficial en Google Cloud Run (`https://cordanopms.ai.studio` / `https://cordano-pms-349577440002.us-west1.run.app`) y el repositorio `cordano-pms-oficial` permanecen **ESTRICTAMENTE CONGELADOS, PROTEGIDOS E INTOCABLES**.
+   - Ningún agente puede ejecutar despliegues hacia Cloud Run (`gcloud run deploy`), modificar la infraestructura en Google Cloud, ni realizar `git push` a `cordano-pms-oficial` o `cordano-pms-respaldo` sin autorización explícita y directa del usuario.
+   - Todo cambio, prueba operativa o validación funcional se limita rigurosamente al entorno de pruebas local.

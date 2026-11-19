@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Play, Coins, ShieldAlert } from 'lucide-react';
 import { useParking } from '../../context/ParkingContext';
 import { generateShiftOpenReportPDF } from '../../utils/pdfGenerator';
 import { ChileanCashBreakdown } from '../../types';
@@ -25,6 +26,7 @@ export const ModalAperturaTurno: React.FC<ModalAperturaTurnoProps> = ({
   onShowToast,
 }) => {
   const { user, openNewShift, logout } = useParking();
+  const isOperator = user?.role === 'operador';
 
   // Step 1: Cash float & denominations | Step 2: Quality checklist | Step 3: Confirmation
   const [step, setStep] = useState<1 | 2>(1);
@@ -114,6 +116,10 @@ export const ModalAperturaTurno: React.FC<ModalAperturaTurnoProps> = ({
   };
 
   const handleNextToStep2 = () => {
+    if (!isOperator) {
+      onShowToast('Incompatibilidad de Caja: Administradores y Supervisores tienen estrictamente VEDADA la apertura de turnos.', 'error');
+      return;
+    }
     if (initialCashNum <= 0) {
       onShowToast('El fondo de apertura en caja debe ser mayor a $0 CLP.', 'error');
       return;
@@ -122,6 +128,10 @@ export const ModalAperturaTurno: React.FC<ModalAperturaTurnoProps> = ({
   };
 
   const handleConfirmShiftStart = () => {
+    if (!isOperator) {
+      onShowToast('Incompatibilidad de Caja: Administradores y Supervisores tienen estrictamente VEDADA la apertura de turnos (Solo Modo Visor).', 'error');
+      return;
+    }
     if (!allMandatoryChecked) {
       onShowToast('Debe marcar todas las verificaciones obligatorias de garita.', 'error');
       return;
@@ -173,8 +183,8 @@ export const ModalAperturaTurno: React.FC<ModalAperturaTurnoProps> = ({
         {/* Modal Header Corporativo */}
         <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-[#1E1E2F] text-white flex items-center justify-between border-b border-[#2D2D44]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#E2498A] flex items-center justify-center text-lg font-black text-white shadow-sm">
-              🚀
+            <div className="w-10 h-10 rounded-xl bg-[#E2498A] flex items-center justify-center text-white shadow-sm">
+              <Play className="w-5 h-5 fill-current" />
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2498A]">
@@ -202,12 +212,48 @@ export const ModalAperturaTurno: React.FC<ModalAperturaTurnoProps> = ({
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-5 text-xs flex-1">
+          {/* Bloque de Incompatibilidad de Caja RBAC */}
+          {!isOperator && (
+            <div className="p-4 bg-rose-50 border-2 border-rose-300 rounded-2xl flex items-start gap-3.5 text-rose-900 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                🛡️
+              </div>
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-black text-sm uppercase tracking-wide text-rose-900">
+                    Incompatibilidad de Caja (Segregación de Funciones)
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-200 text-rose-800">
+                    MODO VISOR OBLIGATORIO
+                  </span>
+                </div>
+                <p className="text-xs text-rose-800 leading-relaxed">
+                  El usuario actual (<strong>{user.name}</strong>, rol <strong>{user.role}</strong>) tiene <strong>estrictamente VEDADA la apertura de turnos, el cobro y la recaudación de gaveta</strong> en Garita POS. La normativa de control interno y auditoría exige preservar la imparcialidad del arqueo ciego, reservando la caja exclusivamente a usuarios con rol <strong>Operador / Cajero</strong>.
+                </p>
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      onClose();
+                      onShowToast('Sesión finalizada. Inicie sesión con un usuario Operador para abrir turno.', 'info');
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>🔄</span>
+                    <span>Cerrar sesión e iniciar como Operador</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ── PASO 1: FONDO DE CAJA INICIAL ── */}
           {step === 1 && (
             <div className="space-y-5">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">💵</span>
+                  <Coins className="w-4 h-4 text-emerald-600" />
                   <h4 className="font-extrabold text-sm text-[#1E1E2F]">
                     Declaración de Fondo Inicial en Gaveta (Sencillo)
                   </h4>
@@ -389,25 +435,31 @@ export const ModalAperturaTurno: React.FC<ModalAperturaTurnoProps> = ({
           {step === 1 ? (
             <button
               type="button"
+              disabled={!isOperator}
               onClick={handleNextToStep2}
-              className="px-6 py-2.5 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+              className={`px-6 py-2.5 rounded-xl font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5 ${
+                isOperator
+                  ? 'bg-[#E2498A] hover:bg-[#C83472] text-white cursor-pointer'
+                  : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+              }`}
+              title={!isOperator ? 'Incompatibilidad de Caja: Administradores y Supervisores no pueden abrir turnos' : undefined}
             >
-              <span>Continuar a Checklist</span>
+              <span>{isOperator ? 'Continuar a Checklist' : 'Apertura Vedada (Rol Supervisor/Admin)'}</span>
               <span>→</span>
             </button>
           ) : (
             <button
               type="button"
-              disabled={!allMandatoryChecked}
+              disabled={!allMandatoryChecked || !isOperator}
               onClick={handleConfirmShiftStart}
-              className={`px-6 py-2.5 rounded-xl font-bold text-xs shadow-md transition active:scale-95 cursor-pointer flex items-center gap-2 ${
-                allMandatoryChecked
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              className={`px-6 py-2.5 rounded-xl font-bold text-xs shadow-md transition active:scale-95 flex items-center gap-2 ${
+                allMandatoryChecked && isOperator
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed'
               }`}
             >
-              <span>🚀</span>
-              <span>Iniciar Turno &amp; Desbloquear POS</span>
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>{isOperator ? 'Iniciar Turno & Desbloquear POS' : 'Apertura Vedada (Incompatibilidad)'}</span>
             </button>
           )}
         </div>

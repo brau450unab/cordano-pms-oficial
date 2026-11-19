@@ -293,7 +293,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                       required
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="braulio@automatizable.cl o braulio"
+                      placeholder="ej: usuario, RUT o correo institucional"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#E2498A] focus:bg-white focus:ring-4 focus:ring-[#E2498A]/10 transition-all"
                     />
                     <User className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -366,7 +366,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         Modo Operador de Garita
                       </span>
                       <span className="text-xs text-slate-500 font-medium mt-0.5 block">
-                        Punto de venta, control de barrera y arqueo ciego de gaveta.
+                        Punto de venta, control de garita y arqueo ciego de gaveta.
                       </span>
                     </div>
                     <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#E2498A] group-hover:translate-x-1 transition-all" />

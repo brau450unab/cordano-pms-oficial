@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Car, Truck, Bike, Printer, Play, Lock, Eye, AlertTriangle } from 'lucide-react';
 import { PaymentMethod } from '../../types';
 import { useParking } from '../../context/ParkingContext';
 
@@ -89,6 +90,7 @@ export const PosView: React.FC<PosViewProps> = ({
     findCustomerByPlate,
     findAgreementByPlate,
     moveOrSwapVehicleSlot,
+    validateAntiPassback,
   } = useParking();
   const isShiftClosed = !isShiftOpen;
   const isSupervisorLiveMode = user?.role === 'administrador' || user?.role === 'supervisor';
@@ -130,6 +132,7 @@ export const PosView: React.FC<PosViewProps> = ({
   const [entryName, setEntryName] = useState('');
   const [entryPhone, setEntryPhone] = useState('');
   const [entryObs, setEntryObs] = useState('');
+  const [showOptionalClientData, setShowOptionalClientData] = useState(false);
   const plateInputRef = useRef<HTMLInputElement>(null);
 
   // Validador técnico de patentes chilenas (Normativa Registro Civil & MTT)
@@ -238,6 +241,54 @@ export const PosView: React.FC<PosViewProps> = ({
 
   const exitSearchInputRef = useRef<HTMLInputElement>(null);
 
+  // Re-impresión rápida del último ticket emitido (útil ante atascos de papel en impresora de 80mm)
+  const handleReprintLastTicket = async () => {
+    if (!tickets || tickets.length === 0) {
+      onShowToast('No hay tickets registrados en el sistema para re-imprimir.', 'info');
+      return;
+    }
+    const sorted = [...tickets].sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
+    const target = sorted[0];
+    if (!target) {
+      onShowToast('No se encontró ningún ticket reciente para re-impresión.', 'info');
+      return;
+    }
+
+    try {
+      const ok = await printFiscalReceipt(target);
+      if (ok) {
+        onShowToast(`Re-imprimiendo ticket ${target.ticketCode || target.id} (${target.plateNumber}) en 80mm`, 'success');
+      } else {
+        generateTicketPdf({
+          ticketNumber: target.ticketCode || target.id,
+          plate: target.plateNumber,
+          category: (target.vehicleType as any) || 'Sedán',
+          rate: target.frozenRate?.minuteRate || entryRate || 35,
+          entryTime: new Date(target.entryTime).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+          slot: target.slotCode || 'A-01',
+          qrData: target.ticketCode || target.id,
+          barcodeData: target.ticketCode || target.id,
+        });
+        onShowToast(`Re-impresión generada: Ticket ${target.ticketCode || target.id} (${target.plateNumber})`, 'success');
+      }
+    } catch (err) {
+      onShowToast('Error al re-imprimir comprobante térmico.', 'error');
+    }
+  };
+
+  // Captura de atajo F8 para re-impresión rápida de garita
+  useEffect(() => {
+    const handlePosKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F8') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleReprintLastTicket();
+      }
+    };
+    window.addEventListener('keydown', handlePosKeyDown, true);
+    return () => window.removeEventListener('keydown', handlePosKeyDown, true);
+  }, [tickets, entryRate]);
+
   // Focus Management
   useEffect(() => {
     if (posTab === 'entry' && plateInputRef.current) {
@@ -267,9 +318,13 @@ export const PosView: React.FC<PosViewProps> = ({
       onShowToast('Ingrese una patente válida.', 'error');
       return;
     }
-    const isInside = activeVehicles.some((v) => v.plate === cleanPlate);
-    if (isInside) {
-      onShowToast(`El vehículo ${cleanPlate} ya se encuentra dentro del recinto.`, 'error');
+    const apCheck = validateAntiPassback(cleanPlate);
+    const isInside = activeVehicles.some((v) => v.plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() === cleanPlate);
+    if (apCheck.isBlocked || isInside) {
+      onShowToast(
+        apCheck.message || `[Anti-Passback SKIDATA] La patente ${cleanPlate} ya registra una entrada activa dentro del recinto Serrano 447.`,
+        'error'
+      );
       return;
     }
 
@@ -573,7 +628,8 @@ export const PosView: React.FC<PosViewProps> = ({
                 }}
                 className="w-full py-3.5 px-4 rounded-xl bg-[#E2498A] hover:bg-[#C83472] text-white font-extrabold text-xs sm:text-sm shadow-md transition cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
               >
-                <span>🚀 Iniciar Turno (Apertura de Caja)</span>
+                <Play className="w-4 h-4 fill-current" />
+                <span>Iniciar Turno (Apertura de Caja)</span>
               </button>
               <button
                 type="button"
@@ -664,6 +720,21 @@ export const PosView: React.FC<PosViewProps> = ({
                 </div>
               </div>
             )}
+
+            {/* Barra de Atajo Rápido: Re-impresión de Ticket (80mm) */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-bold text-slate-500">Operación Rápida:</span>
+              <button
+                type="button"
+                onClick={handleReprintLastTicket}
+                title="Re-imprimir último ticket emitido (F8) - Respaldo ante atascos de papel"
+                className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-pink-50 border border-slate-200 text-slate-700 hover:text-[#C83472] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Re-imprimir Ticket</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-slate-100 text-slate-500">F8</span>
+              </button>
+            </div>
 
             {/* 4 Tabs Operativos del Cajero */}
             <div className="grid grid-cols-4 bg-white p-1 rounded-2xl border border-slate-200 shadow-xs gap-1">
@@ -813,98 +884,113 @@ export const PosView: React.FC<PosViewProps> = ({
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { cat: 'Sedán', rate: 35, icon: '🚗' },
-                        { cat: 'SUV', rate: 45, icon: '🚙' },
-                        { cat: 'Moto', rate: 25, icon: '🏍️' },
-                      ].map((item) => (
-                        <button
-                          key={item.cat}
-                          type="button"
-                          onClick={() => {
-                            setEntryCategory(item.cat as any);
-                            setEntryRate(item.rate);
-                          }}
-                          className={`p-2.5 rounded-xl border-2 text-center transition-all cursor-pointer ${
-                            entryCategory === item.cat
-                              ? 'border-[#E2498A] bg-[#FFF5F8] text-[#E2498A] shadow-xs'
-                              : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="text-base">{item.icon}</div>
-                          <div className="font-extrabold text-xs mt-0.5">{item.cat}</div>
-                          <div className="text-[10px] font-mono font-bold mt-0.5">
-                            ${item.rate}/min
-                          </div>
-                        </button>
-                      ))}
+                        { cat: 'Sedán', rate: 35, icon: Car },
+                        { cat: 'SUV', rate: 45, icon: Truck },
+                        { cat: 'Moto', rate: 25, icon: Bike },
+                      ].map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.cat}
+                            type="button"
+                            onClick={() => {
+                              setEntryCategory(item.cat as any);
+                              setEntryRate(item.rate);
+                            }}
+                            className={`p-2.5 rounded-xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                              entryCategory === item.cat
+                                ? 'border-[#E2498A] bg-[#FFF5F8] text-[#E2498A] shadow-xs'
+                                : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                            }`}
+                          >
+                            <Icon className="w-5 h-5 mb-1" />
+                            <div className="font-extrabold text-xs">{item.cat}</div>
+                            <div className="text-[10px] font-mono font-bold mt-0.5">
+                              ${item.rate}/min
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  {/* Datos del Cliente y WhatsApp (Activos y Visibles) */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                  {/* Acordeón secundario desplegable para Check-in ágil en < 4s */}
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/70 transition-all">
+                    <button
+                      type="button"
+                      onClick={() => setShowOptionalClientData((prev) => !prev)}
+                      className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer select-none"
+                    >
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm">👤</span>
-                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                          Datos del Cliente & WhatsApp
+                        <span className="text-[#E2498A] font-bold">{showOptionalClientData ? '▾' : '▸'}</span>
+                        <span className="text-slate-800 font-extrabold">
+                          {showOptionalClientData ? 'Ocultar datos adicionales' : '+ Datos de Cliente / WhatsApp (Opcional)'}
                         </span>
+                        {detectedCustomer && (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                            ✓ Registrado
+                          </span>
+                        )}
+                        {(entryName || entryPhone || entryObs) && !showOptionalClientData && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E2498A]" />
+                        )}
                       </div>
-                      {detectedCustomer && (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
-                          ✓ Cliente Registrado
-                        </span>
-                      )}
-                    </div>
+                      <span className="text-[10px] text-slate-400 font-normal">Check-in &lt; 4s</span>
+                    </button>
 
-                    {detectedAgreement && (
-                      <div className="p-2 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 font-medium">
-                        🏢 Convenio: <strong>{detectedAgreement.companyName || detectedAgreement.contactName}</strong>
+                    {showOptionalClientData && (
+                      <div className="p-3.5 pt-1 space-y-3 border-t border-slate-200/80 bg-white animate-fade-in">
+                        {detectedAgreement && (
+                          <div className="p-2 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 font-medium">
+                            🏢 Convenio: <strong>{detectedAgreement.companyName || detectedAgreement.contactName}</strong>
+                          </div>
+                        )}
+
+                        <div className="space-y-2.5">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                              Nombre del Cliente / Particular
+                            </label>
+                            <input
+                              type="text"
+                              value={entryName}
+                              onChange={(e) => setEntryName(e.target.value)}
+                              placeholder="Particular / Nombre cliente..."
+                              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#E2498A]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center justify-between">
+                              <span>Teléfono Móvil (WhatsApp)</span>
+                              <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> wa.me
+                              </span>
+                            </label>
+                            <input
+                              type="tel"
+                              value={entryPhone}
+                              onChange={(e) => setEntryPhone(e.target.value)}
+                              placeholder="+56 9 1234 5678"
+                              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#E2498A]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                              Observación de Ingreso / Daños Preexistentes
+                            </label>
+                            <input
+                              type="text"
+                              value={entryObs}
+                              onChange={(e) => setEntryObs(e.target.value)}
+                              placeholder="Detalles físicos, rayones preexistentes..."
+                              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#E2498A]"
+                            />
+                          </div>
+                        </div>
                       </div>
                     )}
-
-                    <div className="space-y-2.5">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                          Nombre del Cliente / Particular
-                        </label>
-                        <input
-                          type="text"
-                          value={entryName}
-                          onChange={(e) => setEntryName(e.target.value)}
-                          placeholder="Particular / Nombre cliente..."
-                          className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#E2498A]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center justify-between">
-                          <span>Teléfono Móvil (WhatsApp)</span>
-                          <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> wa.me
-                          </span>
-                        </label>
-                        <input
-                          type="tel"
-                          value={entryPhone}
-                          onChange={(e) => setEntryPhone(e.target.value)}
-                          placeholder="+56 9 1234 5678"
-                          className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#E2498A]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                          Observación de Ingreso / Daños Preexistentes
-                        </label>
-                        <input
-                          type="text"
-                          value={entryObs}
-                          onChange={(e) => setEntryObs(e.target.value)}
-                          placeholder="Detalles físicos, rayones preexistentes..."
-                          className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#E2498A]"
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   {/* Botón Principal Emitir Ticket */}
@@ -961,17 +1047,57 @@ export const PosView: React.FC<PosViewProps> = ({
                   <div className="space-y-3">
                     {/* Buscador de Patente */}
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1">
-                        Buscar Vehículo para Liquidar
+                      <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1 flex items-center justify-between">
+                        <span>Buscar Vehículo para Liquidar</span>
+                        <span className="text-[10px] text-pink-600 font-bold">Predictivo ≥ 3 caracteres</span>
                       </label>
                       <input
                         ref={exitSearchInputRef}
                         type="text"
                         value={exitSearchQuery}
                         onChange={(e) => setExitSearchQuery(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && exitFilteredVehicles.length > 0) {
+                            e.preventDefault();
+                            loadVehicleIntoExit(exitFilteredVehicles[0]);
+                            onShowToast(`Vehículo ${exitFilteredVehicles[0].plate} seleccionado para cobro`, 'info');
+                          }
+                        }}
                         placeholder="Buscar por patente (ej. ABCD12)..."
                         className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-sm font-bold uppercase text-slate-900 focus:bg-white focus:border-[#E2498A] focus:outline-none transition-all"
                       />
+
+                      {/* Chips predictivos cuando hay al menos 3 caracteres */}
+                      {exitSearchQuery.trim().length >= 3 && exitFilteredVehicles.length > 0 && (
+                        <div className="mt-2 p-2 bg-pink-50/80 border border-[#E2498A]/30 rounded-xl space-y-1.5 animate-fade-in">
+                          <div className="flex items-center justify-between text-[10px] font-bold text-[#C83472]">
+                            <span className="flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#E2498A] animate-ping" />
+                              Coincidencias predictivas ({exitFilteredVehicles.length}):
+                            </span>
+                            <span className="text-slate-500 font-mono">↵ Enter para elegir 1ª</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {exitFilteredVehicles.slice(0, 3).map((v, idx) => (
+                              <button
+                                key={v.plate}
+                                type="button"
+                                onClick={() => loadVehicleIntoExit(v)}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                                  idx === 0
+                                    ? 'bg-[#E2498A] text-white hover:bg-[#C83472]'
+                                    : 'bg-white text-slate-800 border border-slate-200 hover:border-[#E2498A]'
+                                }`}
+                              >
+                                <span>{v.plate}</span>
+                                <span className={`text-[10px] px-1 rounded ${idx === 0 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                  {v.durationMin}m
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Lista de Vehículos en Patio */}
@@ -1224,7 +1350,7 @@ export const PosView: React.FC<PosViewProps> = ({
                         }}
                         className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                       >
-                        <span>🖨️</span>
+                        <Printer className="w-4 h-4 text-slate-600" />
                         <span>Reimprimir Boleta Térmica ESC/POS (58-80mm)</span>
                       </button>
                     </div>
@@ -1910,10 +2036,22 @@ export const PosView: React.FC<PosViewProps> = ({
         {/* ── LEFT COLUMN: POS SYSTEM (Adelgazado a 5/12 cols) ── */}
         <div data-testid="desktop-pos-panel" className="lg:col-span-5 bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
           {/* POS TABS */}
-          <div className="flex border-b border-gray-100 bg-gray-50/50 p-1.5 sm:p-2 gap-1.5 sm:gap-2">
-            <button onClick={() => setPosTab('entry')} className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${posTab === 'entry' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-800'}`}>Ingreso</button>
-            <button onClick={() => setPosTab('exit')} className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${posTab === 'exit' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-800'}`}>Cobro (Salida)</button>
-            <button onClick={() => setPosTab('history')} className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${posTab === 'history' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-800'}`}>Caja</button>
+          <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 p-1.5 sm:p-2 gap-2">
+            <div className="flex flex-1 gap-1.5 sm:gap-2">
+              <button onClick={() => setPosTab('entry')} className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${posTab === 'entry' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-800'}`}>Ingreso (F2)</button>
+              <button onClick={() => setPosTab('exit')} className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${posTab === 'exit' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-800'}`}>Cobro (F4)</button>
+              <button onClick={() => setPosTab('history')} className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${posTab === 'history' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-800'}`}>Caja</button>
+            </div>
+            <button
+              type="button"
+              onClick={handleReprintLastTicket}
+              title="Re-imprimir último ticket emitido (F8) - Útil ante atascos de papel"
+              className="px-3 py-2 sm:py-2.5 rounded-xl bg-white hover:bg-pink-50 border border-slate-200 hover:border-[#E2498A] text-slate-700 hover:text-[#C83472] text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0 active:scale-95"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Re-imprimir</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">F8</span>
+            </button>
           </div>
 
           <div className="p-4 sm:p-6">
@@ -1921,7 +2059,7 @@ export const PosView: React.FC<PosViewProps> = ({
             {isViewerOnly && (
               <div className="mb-4 p-3.5 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-between gap-3 text-blue-900 shadow-xs animate-fade-in">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xl">👁️</span>
+                  <Eye className="w-5 h-5 text-blue-600 shrink-0" />
                   <div>
                     <span className="font-extrabold text-xs block">
                       Modo Solo Visualización · Titular: {currentShift?.operatorName || 'Otro Operador'}
@@ -2031,89 +2169,104 @@ export const PosView: React.FC<PosViewProps> = ({
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  {(['Sedán', 'SUV', 'Moto'] as const).map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => {
-                        setEntryCategory(cat);
-                        setEntryRate(cat === 'Moto' ? 20 : 35);
-                      }}
-                      className={`py-4 rounded-2xl text-sm font-bold border-2 transition-all cursor-pointer ${
-                        entryCategory === cat
-                          ? 'border-[#E2498A] bg-[#FFF5F8] text-[#E2498A]'
-                          : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
-                      }`}
-                    >
-                      <div>{cat === 'Moto' ? '🏍️ Moto' : cat === 'SUV' ? '🚙 SUV' : '🚗 Sedán'}</div>
-                      <div className="text-[11px] font-mono mt-0.5 opacity-80">${cat === 'Moto' ? '20' : '35'}/min</div>
-                    </button>
-                  ))}
+                  {[
+                    { cat: 'Sedán', rate: 35, icon: Car },
+                    { cat: 'SUV', rate: 35, icon: Truck },
+                    { cat: 'Moto', rate: 20, icon: Bike },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.cat}
+                        type="button"
+                        onClick={() => {
+                          setEntryCategory(item.cat as any);
+                          setEntryRate(item.rate);
+                        }}
+                        className={`py-3.5 px-2 rounded-2xl text-sm font-bold border-2 transition-all cursor-pointer flex flex-col items-center justify-center ${
+                          entryCategory === item.cat
+                            ? 'border-[#E2498A] bg-[#FFF5F8] text-[#E2498A]'
+                            : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5 mb-1 text-current" />
+                        <div>{item.cat}</div>
+                        <div className="text-[11px] font-mono mt-0.5 opacity-80">${item.rate}/min</div>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* FORMULARIO ACTIVO REGISTRO DE CLIENTE & WHATSAPP */}
-                <div className="space-y-3.5 bg-slate-50/90 p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs">
-                  <div className="flex items-center justify-between border-b border-slate-200/70 pb-2">
+                {/* ACORDEÓN DESPLEGABLE: DATOS OPCIONALES DE CLIENTE & WHATSAPP (CHECK-IN RÁPIDO < 4s) */}
+                <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/70 shadow-2xs transition-all">
+                  <button
+                    type="button"
+                    onClick={() => setShowOptionalClientData((prev) => !prev)}
+                    className="w-full px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer select-none"
+                  >
                     <div className="flex items-center gap-2">
-                      <span className="text-base">👤</span>
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                          Datos del Cliente & Notificación WhatsApp
-                        </h4>
-                        <span className="text-[10px] text-slate-500 font-medium">
-                          Emisión de comprobante directo con wa.me
+                      <span className="text-[#E2498A] font-bold text-sm">{showOptionalClientData ? '▾' : '▸'}</span>
+                      <span className="font-extrabold text-slate-800">
+                        {showOptionalClientData ? 'Ocultar datos adicionales' : '+ Datos de Cliente / WhatsApp (Opcional)'}
+                      </span>
+                      {detectedCustomer && (
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                          ✓ Autocompletado
                         </span>
+                      )}
+                      {(entryName || entryPhone || entryObs) && !showOptionalClientData && (
+                        <span className="w-2 h-2 rounded-full bg-[#E2498A]" />
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-400 font-medium">Check-in ágil en &lt; 4 seg</span>
+                  </button>
+
+                  {showOptionalClientData && (
+                    <div className="p-4 sm:p-5 pt-2 space-y-3.5 border-t border-slate-200/70 bg-white animate-fade-in">
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-600 mb-1">
+                            Nombre del Cliente / Titular
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#E2498A] focus:ring-2 focus:ring-[#E2498A]/10 transition-all"
+                            placeholder="Particular / Nombre..."
+                            value={entryName}
+                            onChange={(e) => setEntryName(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
+                            <span>Teléfono WhatsApp</span>
+                            <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 font-mono">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> wa.me
+                            </span>
+                          </label>
+                          <input
+                            type="tel"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-[#E2498A] focus:ring-2 focus:ring-[#E2498A]/10 transition-all placeholder:font-sans placeholder:font-normal"
+                            placeholder="+56 9 1234 5678"
+                            value={entryPhone}
+                            onChange={(e) => setEntryPhone(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">
+                          Observaciones / Daños Preexistentes (Opcional)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#E2498A] focus:ring-2 focus:ring-[#E2498A]/10 transition-all"
+                          placeholder="Ej. Rayón en tapabarro delantero, parachoque..."
+                          value={entryObs}
+                          onChange={(e) => setEntryObs(e.target.value)}
+                        />
                       </div>
                     </div>
-                    {detectedCustomer && (
-                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        Autocompletado
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-600 mb-1">
-                        Nombre del Cliente / Titular
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#E2498A] focus:ring-2 focus:ring-[#E2498A]/10 transition-all"
-                        placeholder="Particular / Nombre..."
-                        value={entryName}
-                        onChange={(e) => setEntryName(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
-                        <span>Teléfono WhatsApp</span>
-                        <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 font-mono">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> wa.me
-                        </span>
-                      </label>
-                      <input
-                        type="tel"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-[#E2498A] focus:ring-2 focus:ring-[#E2498A]/10 transition-all placeholder:font-sans placeholder:font-normal"
-                        placeholder="+56 9 1234 5678"
-                        value={entryPhone}
-                        onChange={(e) => setEntryPhone(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">
-                      Observaciones / Daños Preexistentes (Opcional)
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#E2498A] focus:ring-2 focus:ring-[#E2498A]/10 transition-all"
-                      placeholder="Ej. Rayón en tapabarro delantero, parachoque..."
-                      value={entryObs}
-                      onChange={(e) => setEntryObs(e.target.value)}
-                    />
-                  </div>
+                  )}
                 </div>
 
                 <button
@@ -2142,9 +2295,61 @@ export const PosView: React.FC<PosViewProps> = ({
                 {!selectedExitVehicle ? (
                   <>
                     <div>
-                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Buscar Vehículo para Salida</label>
-                       <input ref={exitSearchInputRef} autoFocus type="text" placeholder="Buscar por Patente..." className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-xl font-bold uppercase tabular-nums focus:outline-none focus:border-[#E2498A] focus:ring-4 focus:ring-[#E2498A]/10 transition-all text-gray-900" value={exitSearchQuery} onChange={(e) => setExitSearchQuery(e.target.value)} />
+                       <div className="flex items-center justify-between mb-2">
+                         <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide">Buscar Vehículo para Salida</label>
+                         <span className="text-[11px] font-bold text-[#E2498A]">Búsqueda predictiva (≥ 3 caracteres)</span>
+                       </div>
+                       <input
+                         ref={exitSearchInputRef}
+                         autoFocus
+                         type="text"
+                         placeholder="Buscar por Patente (ej: ABCD12 o 12)..."
+                         className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-xl font-bold uppercase tabular-nums focus:outline-none focus:border-[#E2498A] focus:ring-4 focus:ring-[#E2498A]/10 transition-all text-gray-900"
+                         value={exitSearchQuery}
+                         onChange={(e) => setExitSearchQuery(e.target.value)}
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter' && exitFilteredVehicles.length > 0) {
+                             e.preventDefault();
+                             loadVehicleIntoExit(exitFilteredVehicles[0]);
+                             onShowToast(`Vehículo ${exitFilteredVehicles[0].plate} seleccionado para liquidación`, 'info');
+                           }
+                         }}
+                       />
                     </div>
+
+                    {/* Chips predictivos de acceso rápido (≥ 3 caracteres) */}
+                    {exitSearchQuery.trim().length >= 3 && exitFilteredVehicles.length > 0 && (
+                      <div className="p-3.5 bg-pink-50/80 border border-[#E2498A]/30 rounded-2xl space-y-2 animate-fade-in shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#C83472] flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#E2498A] animate-ping" />
+                            Coincidencias predictivas ({exitFilteredVehicles.length}):
+                          </span>
+                          <span className="text-[11px] text-slate-500 font-mono">Presiona <strong>Enter ↵</strong> para cobrar la primera</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {exitFilteredVehicles.slice(0, 4).map((veh, idx) => (
+                            <button
+                              key={veh.plate}
+                              type="button"
+                              onClick={() => loadVehicleIntoExit(veh)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
+                                idx === 0
+                                  ? 'bg-[#E2498A] text-white hover:bg-[#C83472] ring-2 ring-[#E2498A]/30'
+                                  : 'bg-white text-slate-800 border border-slate-200 hover:border-[#E2498A]'
+                              }`}
+                            >
+                              <span className="font-mono">{veh.plate}</span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${idx === 0 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                {veh.slotCode || `A-${String(veh.slot).padStart(2, '0')}`} · {veh.durationMin}m
+                              </span>
+                              {idx === 0 && <span className="text-[10px] bg-white/25 px-1 rounded font-mono">↵ Enter</span>}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {exitSearchQuery && (
                       <div className="space-y-3">
                         {exitFilteredVehicles.map((v) => (
@@ -2276,7 +2481,7 @@ export const PosView: React.FC<PosViewProps> = ({
                         }}
                         className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                       >
-                        <span>🖨️</span>
+                        <Printer className="w-4 h-4 text-slate-600" />
                         <span>Imprimir Boleta Térmica (ESC/POS o PDF 80mm)</span>
                       </button>
                     </div>
